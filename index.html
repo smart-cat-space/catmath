@@ -1,0 +1,2861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>CatMath</title>
+<meta name="description" content="CatMath — math practice for grade 5 with kittens: times tables, crosswords, divisors, prime factors, fractions and two games. Offline, no ads.">
+<meta name="theme-color" content="#3f8f3a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CatMath">
+<style>
+  :root {
+    --bg: #f3f7ee;
+    --card: #ffffff;
+    --ink: #1f2a1c;
+    --muted: #6b7a66;
+    --accent: #3f8f3a;
+    --accent-ink: #ffffff;
+    --key: #ffffff;
+    --key-ink: #1f2a1c;
+    --key-shadow: #c9d6c2;
+    --good: #2e8b3d;
+    --bad: #d2422d;
+    --gold: #f2b705;
+    --line: #dfe8d9;
+    --sky-top: #9fd8ff;
+    --sky-bottom: #eaf7ff;
+    --cloud: rgba(255, 255, 255, .85);
+    --grass: #7cb342;
+    --soil: #8d6e4f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141a13;
+      --card: #1e261c;
+      --ink: #eef4ea;
+      --muted: #9aab94;
+      --accent: #5cb455;
+      --accent-ink: #0d140c;
+      --key: #273125;
+      --key-ink: #eef4ea;
+      --key-shadow: #0b0f0a;
+      --good: #63c96f;
+      --bad: #ff7a63;
+      --line: #2f3a2c;
+      --sky-top: #0d1630;
+      --sky-bottom: #26314f;
+      --cloud: rgba(255, 255, 255, .12);
+      --grass: #5d8f34;
+      --soil: #5e4632;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+  .app {
+    height: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 6px 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .stat small {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  .stat.good b { color: var(--good); }
+  .stat.bad b { color: var(--bad); }
+  .icon-btn {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 24px;
+    display: grid; place-items: center;
+    padding: 0;
+  }
+  .stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .reward-track {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 14px; color: var(--muted); font-weight: 600;
+  }
+  .dot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--gold);
+    transition: background .2s;
+  }
+  .dot.on { background: var(--gold); }
+  .problem {
+    margin-top: 18px;
+    font-size: clamp(44px, 14vw, 72px);
+    font-weight: 800;
+    letter-spacing: .02em;
+    display: flex; align-items: center; gap: .25em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .answer {
+    min-width: 2.2em;
+    padding: 0 .2em;
+    border-bottom: 5px solid var(--accent);
+    text-align: center;
+    color: var(--accent);
+    min-height: 1.2em;
+  }
+  .answer.good { color: var(--good); border-color: var(--good); }
+  .answer.bad { color: var(--bad); border-color: var(--bad); text-decoration: line-through; }
+  .feedback {
+    margin-top: 14px;
+    min-height: 28px;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .feedback.good { color: var(--good); }
+  .feedback.bad { color: var(--bad); }
+  .shake { animation: shake .35s; }
+  @keyframes shake {
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .timer {
+    position: absolute;
+    top: 14px; left: 16px; right: 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  .timer[hidden] { display: none; }
+  .timebar {
+    flex: 1; height: 10px;
+    border-radius: 5px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .timefill {
+    height: 100%; width: 100%;
+    border-radius: 5px;
+    background: var(--accent);
+  }
+  .timefill.low { background: var(--bad); }
+  .timer.low { color: var(--bad); }
+  .pop { animation: pop .35s; }
+  @keyframes pop { 50% { transform: scale(1.12); } }
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .key {
+    height: clamp(52px, 9vh, 72px);
+    border: none;
+    border-radius: 16px;
+    background: var(--key);
+    color: var(--key-ink);
+    font-size: 30px;
+    font-weight: 700;
+    box-shadow: 0 4px 0 var(--key-shadow);
+    font-family: inherit;
+  }
+  .key:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--key-shadow); }
+  .key.ok { background: var(--accent); color: var(--accent-ink); }
+  .key.del { font-size: 26px; }
+  .burst {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    pointer-events: none;
+    font-size: 120px;
+    opacity: 0;
+  }
+  .burst.show { animation: burst 1s ease-out; }
+  @keyframes burst {
+    0% { opacity: 0; transform: scale(.3) rotate(-20deg); }
+    30% { opacity: 1; transform: scale(1.1) rotate(8deg); }
+    100% { opacity: 0; transform: scale(1.4) translateY(-60px); }
+  }
+
+  /* settings sheet */
+  .sheet-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 10;
+  }
+  .sheet-bg.open { display: flex; }
+  .sheet {
+    background: var(--card);
+    width: 100%;
+    max-width: 520px;
+    max-height: 92%;
+    overflow-y: auto;
+    border-radius: 22px 22px 0 0;
+    padding: 20px 16px max(20px, env(safe-area-inset-bottom));
+  }
+  .sheet h2 { margin: 0 0 12px; font-size: 22px; }
+  .sheet h3 { margin: 18px 0 8px; font-size: 15px; color: var(--muted); font-weight: 700; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    min-width: 48px; height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 2px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 18px; font-weight: 700;
+    font-family: inherit;
+  }
+  .chip.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .row-btns { display: flex; gap: 10px; margin-top: 22px; }
+  .btn {
+    flex: 1; height: 50px;
+    border-radius: 14px; border: none;
+    font-size: 17px; font-weight: 700; font-family: inherit;
+    background: var(--accent); color: var(--accent-ink);
+  }
+  .btn.ghost { background: var(--bg); color: var(--bad); border: 2px solid var(--line); }
+  .records { font-size: 15px; line-height: 1.6; color: var(--ink); }
+  .records b { font-variant-numeric: tabular-nums; }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .top .icon-btn { width: 44px; flex: none; }
+  .top .stat { min-width: 0; }
+
+  .heat {
+    display: grid;
+    grid-template-columns: 26px repeat(10, 1fr) 40px;
+    gap: 3px;
+    margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .heat div {
+    height: 28px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    border-radius: 6px;
+  }
+  .heat .hd { color: var(--muted); font-weight: 600; }
+  .heat .row-l { color: var(--ink); font-size: 15px; }
+  .heat .pct { font-size: 12px; color: var(--muted); }
+  .c-none { background: var(--line); }
+  .c-ok { background: #8fd18a; color: #173d14; }
+  .c-some { background: #f5c25b; color: #4a3200; }
+  .c-bad { background: #ef7a63; color: #4a0e04; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 6px 14px;
+    margin-top: 10px; font-size: 13px; color: var(--muted);
+  }
+  .legend > span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+  .list-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .when { font-weight: 700; }
+  .list-item .meta { color: var(--muted); font-size: 14px; }
+  .list-item .errs { font-size: 14px; color: var(--bad); }
+  .hard {
+    display: flex; justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 17px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .hard span:last-child { font-size: 14px; font-weight: 600; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 14px; }
+
+  .tabs {
+    display: flex; gap: 2px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 4px;
+  }
+  .tab {
+    flex: 1; min-width: 0; height: 48px;
+    border: none; border-radius: 10px;
+    background: transparent; color: var(--muted);
+    font-size: 11px; font-weight: 700; font-family: inherit;
+    letter-spacing: -0.2px;
+    padding: 0 1px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    white-space: nowrap; overflow: hidden;
+  }
+  .tab .ti { font-size: 18px; line-height: 1; }
+  .tab span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .tab.on { background: var(--accent); color: var(--accent-ink); }
+  .view {
+    width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .view[hidden] { display: none; }
+  .cw-rule {
+    font-size: 14px; font-weight: 600; color: var(--muted);
+    text-align: center; margin-bottom: 10px;
+  }
+  #crossView .feedback { margin-top: 8px; }
+  .cw {
+    display: grid;
+    grid-template-columns: 1fr 26px 1fr 26px 1fr;
+    grid-template-rows: clamp(42px, 7vh, 60px) 18px clamp(42px, 7vh, 60px) 18px clamp(42px, 7vh, 60px);
+    gap: 4px;
+    width: min(100%, 330px);
+    font-variant-numeric: tabular-nums;
+  }
+  .cw .op {
+    display: grid; place-items: center;
+    font-size: 24px; font-weight: 800; color: var(--muted);
+  }
+  .cw .cell {
+    display: grid; place-items: center;
+    border-radius: 14px;
+    font-size: clamp(22px, 7vw, 30px); font-weight: 800;
+  }
+  .cw .given { background: var(--bg); color: var(--ink); }
+  .cw .inp {
+    border: 3px solid var(--line);
+    background: var(--card);
+    color: var(--accent);
+  }
+  .cw .inp.sel { border-color: var(--accent); background: rgba(63, 143, 58, .1); }
+  .cw .inp.bad { border-color: var(--bad); color: var(--bad); }
+  .cw .inp.good { border-color: var(--good); color: var(--good); }
+  .cw .inp.shown { color: var(--muted); border-style: dashed; }
+  .cw.small .cell { font-size: 21px; border-radius: 10px; }
+  #crossView.tight .cw-rule { display: none; }
+  #crossView.tight .feedback { margin-top: 4px; min-height: 22px; font-size: 17px; }
+  /* short screens (small phones, large system font): smaller keys leave room for the task */
+  @media (max-height: 760px) { .key { height: clamp(44px, 7.5vh, 60px); font-size: 26px; } }
+  .cw.small .op { font-size: 18px; }
+
+  .keypad[hidden] { display: none; }
+  .divs-task { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 10px; }
+  .divs-task b { font-size: 34px; color: var(--accent); vertical-align: middle; margin-left: 4px; }
+  .divs-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+    width: 100%;
+  }
+  .divs-grid button {
+    height: clamp(30px, 5vh, 40px);
+    padding: 0;
+    border-radius: 9px;
+    border: 2px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 16px; font-weight: 800; font-family: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+  .divs-grid button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .divs-grid button.ok { background: var(--good); border-color: var(--good); color: #fff; }
+  .divs-grid button.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .divs-grid button.miss { border: 2px dashed var(--good); color: var(--good); }
+  #divsView .feedback { margin-top: 8px; font-size: 17px; }
+  #btnDivs { flex: none; width: 100%; margin-top: 8px; }
+  .divs-sub { justify-content: center; margin-bottom: 12px; }
+  .divs-sub .chip { font-size: 15px; height: 38px; }
+  /* the column method: 60 | 2, 30 | 2, 15 | 3, 5 | 5, 1 */
+  .ladder {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    font-size: clamp(22px, 6vw, 28px); font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+  }
+  .ladder div { padding: 0 14px; text-align: right; min-width: 64px; }
+  .ladder .f { border-left: 3px solid var(--ink); text-align: left; color: var(--accent); }
+  .ladder .now { color: var(--accent); }
+  .ladder .q { color: var(--muted); }
+  .prime-keys {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-top: 14px;
+  }
+  .prime-keys .key { height: 54px; font-size: 24px; }
+  #gameView, #dashView {
+    position: absolute; inset: 0;
+    border-radius: 22px;
+    overflow: hidden;
+  }
+  #gameView[hidden], #dashView[hidden] { display: none; }
+  #gameCanvas, #dashCanvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    touch-action: none;
+  }
+  .hud { position: absolute; left: 12px; right: 12px; top: 10px; pointer-events: none; }
+  .hud-row {
+    display: flex; justify-content: space-between;
+    font-size: 20px; font-weight: 800; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .hud-q {
+    margin: 6px auto 0;
+    width: fit-content;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 4px 18px;
+    font-size: clamp(30px, 10vw, 44px); font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 4px 0 var(--key-shadow);
+    white-space: nowrap;
+  }
+  .hud-q.long {
+    font-size: clamp(20px, 6vw, 26px);
+    white-space: pre-line;
+    text-align: center;
+    max-width: 100%;
+  }
+  .hud-time {
+    margin: 8px auto 0;
+    width: 60%; height: 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .15);
+    overflow: hidden;
+  }
+  .hud-time[hidden] { display: none; }
+  .hud-time > div { height: 100%; width: 100%; background: var(--gold); }
+  .hud-msg {
+    position: absolute; left: 16px; right: 16px; bottom: 12px;
+    text-align: center;
+    font-size: 18px; font-weight: 800; color: var(--ink);
+    pointer-events: none;
+  }
+  .hud-msg.bad { color: var(--bad); }
+  .over {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, .35);
+    display: grid; place-items: center;
+  }
+  .over[hidden] { display: none; }
+  .over-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 20px 22px;
+    text-align: center;
+    width: min(86%, 300px);
+  }
+  .over-cat { font-size: 56px; }
+  .over-title { font-size: 22px; font-weight: 800; margin: 4px 0 8px; }
+  .over-stats { font-size: 16px; line-height: 1.6; margin-bottom: 14px; }
+  .over .btn { width: 100%; flex: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="stat"><small data-t="cats">Котики</small><b id="sPine">0</b> 🐱</div>
+    <div class="stat good"><small data-t="correct">Верно</small><b id="sGood">0</b></div>
+    <div class="stat bad"><small data-t="wrong">Ошибки</small><b id="sBad">0</b></div>
+    <button class="icon-btn" id="btnStats" aria-label="statistics">📊</button>
+    <button class="icon-btn" id="btnSettings" aria-label="settings">⚙️</button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab" data-mode="table"><span class="ti">✖️</span><span data-t="modeTable">Таблица</span></button>
+    <button class="tab" data-mode="cross"><span class="ti">🧩</span><span data-t="modeCross">Кроссворд</span></button>
+    <button class="tab" data-mode="divs"><span class="ti">🔍</span><span data-t="modeDivs">Делители</span></button>
+    <button class="tab" data-mode="game"><span class="ti">🐾</span><span data-t="modeGame">Прыгун</span></button>
+    <button class="tab" data-mode="dash"><span class="ti">⚡</span><span data-t="modeDash">Бегун</span></button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="timer" id="timer" hidden>
+      <span>⏱</span>
+      <div class="timebar"><div class="timefill" id="timefill"></div></div>
+      <span id="timenum"></span>
+    </div>
+    <div class="view" id="tableView">
+      <div class="reward-track">
+        <span data-t="toNext">До котика:</span>
+        <span class="dot" id="d0"></span><span class="dot" id="d1"></span><span class="dot" id="d2"></span>
+      </div>
+      <div class="problem" id="problem">
+        <span id="qText">9 · 7</span><span>=</span><span class="answer" id="answer"></span>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="view" id="crossView" hidden>
+      <div class="cw-rule" data-t="cwRule"></div>
+      <div class="cw" id="cw"></div>
+      <div class="feedback" id="cwFb"></div>
+    </div>
+    <div class="view" id="divsView" hidden>
+      <div class="chips divs-sub" id="divsSub">
+        <button class="chip" data-sub="divs" data-t="subDivs">🔍 Divisors</button>
+        <button class="chip" data-sub="factor" data-t="subFactor">🌳 Factorize</button>
+      </div>
+      <div class="view" id="divsBox">
+        <div class="divs-task"><span data-t="divsTask">Tap all divisors of</span> <b id="divsN"></b></div>
+        <div class="divs-grid" id="divsGrid"></div>
+      </div>
+      <div class="view" id="factorBox" hidden>
+        <div class="divs-task" data-t="factorTask">Divide by prime numbers:</div>
+        <div class="ladder" id="ladder"></div>
+        <div class="prime-keys" id="primeKeys"></div>
+      </div>
+      <div class="feedback" id="divsFb"></div>
+      <button class="btn" id="btnDivs" data-t="check">Check</button>
+    </div>
+    <div id="gameView" hidden>
+      <canvas id="gameCanvas"></canvas>
+      <div class="hud">
+        <div class="hud-row"><span id="hHearts"></span><span id="hHeight"></span></div>
+        <div class="hud-q" id="hQ"></div>
+        <div class="hud-time" id="hTime" hidden><div id="hTimeFill"></div></div>
+      </div>
+      <div class="hud-msg" id="hMsg"></div>
+      <div class="over" id="gameOver" hidden>
+        <div class="over-card">
+          <div class="over-cat">😿</div>
+          <div class="over-title" data-t="gameOver">Игра окончена</div>
+          <div class="over-stats" id="overStats"></div>
+          <button class="btn" id="btnAgain" data-t="playAgain">Ещё раз 🐾</button>
+        </div>
+      </div>
+    </div>
+    <div id="dashView" hidden>
+      <canvas id="dashCanvas"></canvas>
+      <div class="hud">
+        <div class="hud-row"><span id="dHearts"></span><span id="dDist"></span></div>
+        <div class="hud-q" id="dQ"></div>
+      </div>
+      <div class="hud-msg" id="dMsg"></div>
+      <div class="over" id="dashOver" hidden>
+        <div class="over-card">
+          <div class="over-cat">😿</div>
+          <div class="over-title" data-t="gameOver">Игра окончена</div>
+          <div class="over-stats" id="dashOverStats"></div>
+          <button class="btn" id="btnDashAgain" data-t="playAgain">Ещё раз 🐾</button>
+        </div>
+      </div>
+    </div>
+    <div class="burst" id="burst">😺</div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <button class="key" data-k="1">1</button>
+    <button class="key" data-k="2">2</button>
+    <button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button>
+    <button class="key" data-k="5">5</button>
+    <button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button>
+    <button class="key" data-k="8">8</button>
+    <button class="key" data-k="9">9</button>
+    <button class="key del" data-k="del">⌫</button>
+    <button class="key" data-k="0">0</button>
+    <button class="key ok" data-k="ok">✓</button>
+  </div>
+</div>
+
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet">
+    <h2 data-t="settings">Настройки</h2>
+
+    <h3 data-t="numbers">Умножать и делить на</h3>
+    <div class="chips" id="chipsNums"></div>
+    <div class="hint" data-t="numbersHint">Start with 6, 7, 8, 9 — add more if you like.</div>
+
+    <h3 data-t="ops">Действия</h3>
+    <div class="chips" id="chipsOps"></div>
+
+    <h3 data-t="timer">Время на ответ</h3>
+    <div class="chips" id="chipsTimer"></div>
+
+    <h3 data-t="topicsL">Темы в Прыгуне и Бегуне</h3>
+    <div class="chips" id="chipsTopics"></div>
+
+    <h3 data-t="cwLevel">Числа в кроссворде</h3>
+    <div class="chips" id="chipsCross"></div>
+
+    <h3 data-t="sound">Звук</h3>
+    <div class="chips" id="chipsSound"></div>
+
+    <h3 data-t="lang">Язык</h3>
+    <div class="chips" id="chipsLang"></div>
+
+    <h3 data-t="records">Рекорды</h3>
+    <div class="records" id="records"></div>
+
+    <div class="row-btns">
+      <button class="btn ghost" id="btnReset" data-t="reset">Сбросить счёт</button>
+      <button class="btn" id="btnClose" data-t="done">Готово</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-bg" id="statsBg">
+  <div class="sheet">
+    <h2 data-t="stats">Статистика</h2>
+
+    <h3 data-t="whereMistakes">Где ошибки</h3>
+    <div class="chips" id="chipsHeat"></div>
+    <div class="heat" id="heat"></div>
+    <div class="legend">
+      <span><i class="c-none"></i><span data-t="legendNone">ещё не было</span></span>
+      <span><i class="c-ok"></i><span data-t="legendOk">без ошибок</span></span>
+      <span><i class="c-some"></i><span data-t="legendSome">есть ошибки</span></span>
+      <span><i class="c-bad"></i><span data-t="legendBad">много ошибок</span></span>
+    </div>
+    <div class="hint" data-t="heatHint"></div>
+
+    <h3 data-t="hardest">Трудные примеры</h3>
+    <div id="hardest"></div>
+
+    <h3 data-t="topicStats">Темы</h3>
+    <div id="topicSummary"></div>
+
+    <h3 data-t="crossStats">Кроссворды</h3>
+    <div class="records" id="crossSummary"></div>
+
+    <h3 data-t="gameStats">Прыгун</h3>
+    <div class="records" id="gameSummary"></div>
+
+    <h3 data-t="dashStats">Бегун</h3>
+    <div class="records" id="dashSummary"></div>
+
+    <h3 data-t="sessions">Тренировки</h3>
+    <div id="sessions"></div>
+
+    <div class="row-btns">
+      <button class="btn ghost" id="btnClearStats" data-t="clearStats">Очистить статистику</button>
+      <button class="btn" id="btnStatsClose" data-t="done">Готово</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var I18N = {
+    ru: {
+      cats: "Котики", correct: "Верно", wrong: "Ошибки", toNext: "До котика:",
+      settings: "Настройки", numbers: "Умножать и делить на",
+      numbersHint: "Для начала 6, 7, 8, 9 — можно добавить другие.",
+      ops: "Действия", opMul: "× умножение", opDiv: ": деление",
+      sound: "Звук", on: "Вкл", off: "Выкл", lang: "Язык", records: "Рекорды",
+      reset: "Новая тренировка", done: "Готово",
+      great: ["Молодец!", "Верно!", "Отлично!", "Супер!", "Так держать!"],
+      gotCat: "Котик!", rightIs: "Правильно: ",
+      bestStreak: "Лучшая серия без ошибок", totalCats: "Всего котиков", totalSolved: "Всего решено",
+      confirmReset: "Нажми ещё раз",
+      timer: "Время на ответ", sec: "с", timeUp: "Время вышло! ",
+      stats: "Статистика", whereMistakes: "Где ошибки", heatHint: "Число в клетке — сколько раз ошибся. Справа — % верных ответов.",
+      legendNone: "ещё не было", legendOk: "без ошибок", legendSome: "есть ошибки", legendBad: "много ошибок",
+      hardest: "Трудные примеры", sessions: "Тренировки", noData: "Пока нет данных — реши несколько примеров.",
+      noMistakes: "Без ошибок!", clearStats: "Очистить статистику", min: "мин", locale: "ru-RU",
+      topicsL: "Темы в Прыгуне и Бегуне", tTable: "× Таблица", tOrder: "( ) Порядок действий",
+      tRem: "Деление с остатком", tFrac: "½ Дроби", rem: "ост.", bigger: "Что больше?", or: "или",
+      topicStats: "Темы",
+      tDivs: "🔍 Делители", modeDivs: "Делители",
+      divisorOf: "Какое число — делитель {n}?", notDivisorOf: "Какое число НЕ делитель {n}?",
+      countDivs: "Сколько делителей у {n}?", allDivs: "Все делители {n}?",
+      whichPrime: "Какое число простое?", divisibleBy: "Какое число делится на {k}?",
+      divsTask: "Отметь все делители числа", check: "Проверить", nextL: "Дальше →",
+      divsPick: "Сначала отметь делители", divsGood: "Все делители найдены!",
+      tGcd: "НОД и НОК", tPrimes: "🌳 Простые множители", gcd: "НОД", lcm: "НОК",
+      subDivs: "🔍 Делители", subFactor: "🌳 Разложение", factorTask: "Дели на простые числа:",
+      factorDone: "Готово!", factorNot: "{n} не делится на {p}",
+      modeTable: "Таблица", modeCross: "Кроссворд",
+      cwRule: "Каждая строка и каждый столбец — пример на умножение.",
+      cwFill: "Заполни все клетки", cwWrong: "Есть ошибки — исправь красные клетки",
+      cwReveal: "Вот правильные ответы", cwLevel: "Числа в кроссворде", upTo: "до",
+      crossStats: "Кроссворды", cwSolved: "Решено", cwFirst: "с первой попытки",
+      modeGame: "Прыгун", gameHint: "Прыгай на платформу с правильным ответом!",
+      gameOver: "Игра окончена", playAgain: "Ещё раз 🐾", heightL: "Высота", recordL: "Рекорд",
+      newRecord: "Новый рекорд! 🎉", gameStats: "Прыгун", bestHeight: "Лучшая высота",
+      modeDash: "Бегун", dashHint: "Перепрыгивай неверные ответы, пробегай через верный!",
+      distL: "Дистанция", bestDist: "Лучшая дистанция", dashStats: "Бегун", meters: "м"
+    },
+    uk: {
+      cats: "Котики", correct: "Вірно", wrong: "Помилки", toNext: "До котика:",
+      settings: "Налаштування", numbers: "Множити й ділити на",
+      numbersHint: "Для початку 6, 7, 8, 9 — можна додати інші.",
+      ops: "Дії", opMul: "× множення", opDiv: ": ділення",
+      sound: "Звук", on: "Увімк", off: "Вимк", lang: "Мова", records: "Рекорди",
+      reset: "Нове тренування", done: "Готово",
+      great: ["Молодець!", "Вірно!", "Чудово!", "Супер!", "Так тримати!"],
+      gotCat: "Котик!", rightIs: "Правильно: ",
+      bestStreak: "Найкраща серія без помилок", totalCats: "Усього котиків", totalSolved: "Усього розв'язано",
+      confirmReset: "Натисни ще раз",
+      timer: "Час на відповідь", sec: "с", timeUp: "Час вийшов! ",
+      stats: "Статистика", whereMistakes: "Де помилки", heatHint: "Число в клітинці — скільки разів помилився. Праворуч — % правильних відповідей.",
+      legendNone: "ще не було", legendOk: "без помилок", legendSome: "є помилки", legendBad: "багато помилок",
+      hardest: "Складні приклади", sessions: "Тренування", noData: "Поки немає даних — розв'яжи кілька прикладів.",
+      noMistakes: "Без помилок!", clearStats: "Очистити статистику", min: "хв", locale: "uk-UA",
+      topicsL: "Теми у Стрибунці та Бігуні", tTable: "× Таблиця", tOrder: "( ) Порядок дій",
+      tRem: "Ділення з остачею", tFrac: "½ Дроби", rem: "ост.", bigger: "Що більше?", or: "чи",
+      topicStats: "Теми",
+      tDivs: "🔍 Дільники", modeDivs: "Дільники",
+      divisorOf: "Яке число — дільник {n}?", notDivisorOf: "Яке число НЕ дільник {n}?",
+      countDivs: "Скільки дільників у {n}?", allDivs: "Усі дільники {n}?",
+      whichPrime: "Яке число просте?", divisibleBy: "Яке число ділиться на {k}?",
+      divsTask: "Познач усі дільники числа", check: "Перевірити", nextL: "Далі →",
+      divsPick: "Спочатку познач дільники", divsGood: "Усі дільники знайдено!",
+      tGcd: "НСД і НСК", tPrimes: "🌳 Прості множники", gcd: "НСД", lcm: "НСК",
+      subDivs: "🔍 Дільники", subFactor: "🌳 Розклад", factorTask: "Діли на прості числа:",
+      factorDone: "Готово!", factorNot: "{n} не ділиться на {p}",
+      modeTable: "Таблиця", modeCross: "Кросворд",
+      cwRule: "Кожен рядок і кожен стовпчик — приклад на множення.",
+      cwFill: "Заповни всі клітинки", cwWrong: "Є помилки — виправ червоні клітинки",
+      cwReveal: "Ось правильні відповіді", cwLevel: "Числа в кросворді", upTo: "до",
+      crossStats: "Кросворди", cwSolved: "Розв'язано", cwFirst: "з першої спроби",
+      modeGame: "Стрибунець", gameHint: "Стрибай на платформу з правильною відповіддю!",
+      gameOver: "Гру закінчено", playAgain: "Ще раз 🐾", heightL: "Висота", recordL: "Рекорд",
+      newRecord: "Новий рекорд! 🎉", gameStats: "Стрибунець", bestHeight: "Найкраща висота",
+      modeDash: "Бігун", dashHint: "Перестрибуй неправильні відповіді, пробігай крізь правильну!",
+      distL: "Дистанція", bestDist: "Найкраща дистанція", dashStats: "Бігун", meters: "м"
+    },
+    pl: {
+      cats: "Kotki", correct: "Dobrze", wrong: "Błędy", toNext: "Do kotka:",
+      settings: "Ustawienia", numbers: "Mnożenie i dzielenie przez",
+      numbersHint: "Na start 6, 7, 8, 9 — możesz dodać inne.",
+      ops: "Działania", opMul: "× mnożenie", opDiv: ": dzielenie",
+      sound: "Dźwięk", on: "Wł.", off: "Wył.", lang: "Język", records: "Rekordy",
+      reset: "Nowy trening", done: "Gotowe",
+      great: ["Brawo!", "Dobrze!", "Świetnie!", "Super!", "Tak trzymaj!"],
+      gotCat: "Kotek!", rightIs: "Poprawnie: ",
+      bestStreak: "Najdłuższa seria bez błędu", totalCats: "Kotków łącznie", totalSolved: "Rozwiązanych łącznie",
+      confirmReset: "Naciśnij jeszcze raz",
+      timer: "Czas na odpowiedź", sec: "s", timeUp: "Koniec czasu! ",
+      stats: "Statystyki", whereMistakes: "Gdzie są błędy", heatHint: "Liczba w kratce — ile razy był błąd. Po prawej — % dobrych odpowiedzi.",
+      legendNone: "jeszcze nie było", legendOk: "bez błędów", legendSome: "są błędy", legendBad: "dużo błędów",
+      hardest: "Trudne przykłady", sessions: "Treningi", noData: "Na razie brak danych — rozwiąż kilka przykładów.",
+      noMistakes: "Bez błędów!", clearStats: "Wyczyść statystyki", min: "min", locale: "pl-PL",
+      topicsL: "Tematy w Skoczku i Biegaczu", tTable: "× Tabliczka", tOrder: "( ) Kolejność działań",
+      tRem: "Dzielenie z resztą", tFrac: "½ Ułamki", rem: "r.", bigger: "Co jest większe?", or: "czy",
+      topicStats: "Tematy",
+      tDivs: "🔍 Dzielniki", modeDivs: "Dzielniki",
+      divisorOf: "Która liczba jest dzielnikiem liczby {n}?", notDivisorOf: "Która liczba NIE jest dzielnikiem liczby {n}?",
+      countDivs: "Ile dzielników ma liczba {n}?", allDivs: "Wszystkie dzielniki liczby {n}?",
+      whichPrime: "Która liczba jest pierwsza?", divisibleBy: "Która liczba jest podzielna przez {k}?",
+      divsTask: "Zaznacz wszystkie dzielniki liczby", check: "Sprawdź", nextL: "Dalej →",
+      divsPick: "Najpierw zaznacz dzielniki", divsGood: "Wszystkie dzielniki znalezione!",
+      tGcd: "NWD i NWW", tPrimes: "🌳 Rozkład na czynniki", gcd: "NWD", lcm: "NWW",
+      subDivs: "🔍 Dzielniki", subFactor: "🌳 Rozkład", factorTask: "Dziel przez liczby pierwsze:",
+      factorDone: "Gotowe!", factorNot: "{n} nie dzieli się przez {p}",
+      modeTable: "Tabliczka", modeCross: "Krzyżówka",
+      cwRule: "Każdy wiersz i każda kolumna to mnożenie.",
+      cwFill: "Wypełnij wszystkie kratki", cwWrong: "Są błędy — popraw czerwone kratki",
+      cwReveal: "Oto poprawne odpowiedzi", cwLevel: "Liczby w krzyżówce", upTo: "do",
+      crossStats: "Krzyżówki", cwSolved: "Rozwiązane", cwFirst: "za pierwszym razem",
+      modeGame: "Skoczek", gameHint: "Skacz na platformę z dobrą odpowiedzią!",
+      gameOver: "Koniec gry", playAgain: "Jeszcze raz 🐾", heightL: "Wysokość", recordL: "Rekord",
+      newRecord: "Nowy rekord! 🎉", gameStats: "Skoczek", bestHeight: "Najlepsza wysokość",
+      modeDash: "Biegacz", dashHint: "Przeskakuj złe odpowiedzi, przebiegnij przez dobrą!",
+      distL: "Dystans", bestDist: "Najlepszy dystans", dashStats: "Biegacz", meters: "m"
+    },
+    en: {
+      cats: "Kittens", correct: "Correct", wrong: "Mistakes", toNext: "Next kitten:",
+      settings: "Settings", numbers: "Multiply and divide by",
+      numbersHint: "Start with 6, 7, 8, 9 — add more if you like.",
+      ops: "Operations", opMul: "× multiply", opDiv: ": divide",
+      sound: "Sound", on: "On", off: "Off", lang: "Language", records: "Records",
+      reset: "New session", done: "Done",
+      great: ["Well done!", "Correct!", "Excellent!", "Super!", "Keep it up!"],
+      gotCat: "Kitten!", rightIs: "Correct answer: ",
+      bestStreak: "Best streak without mistakes", totalCats: "Total kittens", totalSolved: "Total solved",
+      confirmReset: "Tap again",
+      timer: "Time per answer", sec: "s", timeUp: "Time's up! ",
+      stats: "Statistics", whereMistakes: "Where the mistakes are", heatHint: "The number in a cell is how many mistakes. On the right — % correct.",
+      legendNone: "not yet", legendOk: "no mistakes", legendSome: "some mistakes", legendBad: "many mistakes",
+      hardest: "Hardest examples", sessions: "Sessions", noData: "No data yet — solve a few examples.",
+      noMistakes: "No mistakes!", clearStats: "Clear statistics", min: "min", locale: "en-GB",
+      topicsL: "Topics in Jumper and Dash", tTable: "× Times tables", tOrder: "( ) Order of operations",
+      tRem: "Remainders", tFrac: "½ Fractions", rem: "r", bigger: "Which is bigger?", or: "or",
+      topicStats: "Topics",
+      tDivs: "🔍 Divisors", modeDivs: "Divisors",
+      divisorOf: "Which is a divisor of {n}?", notDivisorOf: "Which is NOT a divisor of {n}?",
+      countDivs: "How many divisors does {n} have?", allDivs: "All divisors of {n}?",
+      whichPrime: "Which number is prime?", divisibleBy: "Which is divisible by {k}?",
+      divsTask: "Tap all divisors of", check: "Check", nextL: "Next →",
+      divsPick: "Tap the divisors first", divsGood: "All divisors found!",
+      tGcd: "GCD & LCM", tPrimes: "🌳 Prime factors", gcd: "GCD", lcm: "LCM",
+      subDivs: "🔍 Divisors", subFactor: "🌳 Factorize", factorTask: "Divide by prime numbers:",
+      factorDone: "Done!", factorNot: "{n} can't be divided by {p}",
+      modeTable: "Table", modeCross: "Crossword",
+      cwRule: "Every row and every column is a multiplication.",
+      cwFill: "Fill in all the cells", cwWrong: "Some mistakes — fix the red cells",
+      cwReveal: "Here are the correct answers", cwLevel: "Numbers in the crossword", upTo: "up to",
+      crossStats: "Crosswords", cwSolved: "Solved", cwFirst: "first try",
+      modeGame: "Jumper", gameHint: "Jump onto the platform with the right answer!",
+      gameOver: "Game over", playAgain: "Play again 🐾", heightL: "Height", recordL: "Record",
+      newRecord: "New record! 🎉", gameStats: "Jumper", bestHeight: "Best height",
+      modeDash: "Dash", dashHint: "Jump over wrong answers, run through the right one!",
+      distL: "Distance", bestDist: "Best distance", dashStats: "Dash", meters: "m"
+    }
+  };
+  var CATS = ["😺", "😸", "😻", "😽", "🐱", "🐈"];
+  var LANG_NAMES = { en: "English", pl: "Polski", ru: "Русский", uk: "Українська" };
+
+  var TOPICS = ["table", "order", "rem", "frac", "divs", "gcd", "primes"];
+  var STORE_KEY = "trainer.v1";
+  var defaults = {
+    nums: [6, 7, 8, 9],
+    ops: ["mul", "div"],
+    sound: true,
+    timer: 0,               // seconds per answer, 0 = no limit
+    mode: "table",          // "table" or "cross"
+    crossMax: 100,          // largest number in a crossword: 100 or 1000
+    topics: ["table"],      // question topics in the Jumper and Dash
+    lang: "en",
+    langChosen: false,      // true once a language was picked in settings
+    session: { good: 0, bad: 0, pine: 0, streak: 0, toward: 0, start: 0, last: 0 },
+    best: { streak: 0, pine: 0, solved: 0, cross: 0, crossFirst: 0, height: 0, dash: 0 },
+    facts: {},              // "mul:7:8" / "div:7:8" -> [correct, wrong]
+    topicFacts: {},         // "frac|2/7 + 3/7" -> { g, b, p } for the other topics
+    history: []             // one entry per training session
+  };
+  var SESSION_GAP = 30 * 60 * 1000;   // a pause this long starts a new session
+  var MAX_HISTORY = 200;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        return {
+          nums: s.nums && s.nums.length ? s.nums : defaults.nums.slice(),
+          ops: s.ops && s.ops.length ? s.ops : defaults.ops.slice(),
+          sound: s.sound !== false,
+          timer: typeof s.timer === "number" ? s.timer : 0,
+          // older saves stored Russian as the default; switch those to English once
+          lang: s.langChosen && I18N[s.lang] ? s.lang : "en",
+          langChosen: !!s.langChosen,
+          mode: ["cross", "game", "dash", "divs"].indexOf(s.mode) !== -1 ? s.mode : "table",
+          crossMax: s.crossMax === 1000 ? 1000 : 100,
+          divsSub: s.divsSub === "factor" ? "factor" : "divs",
+          topics: (s.topics || []).filter(function (t) { return TOPICS.indexOf(t) !== -1; }).length
+            ? s.topics.filter(function (t) { return TOPICS.indexOf(t) !== -1; }) : ["table"],
+          session: Object.assign({}, defaults.session, s.session || {}),
+          best: Object.assign({}, defaults.best, s.best || {}),
+          facts: s.facts || {},
+          topicFacts: s.topicFacts || {},
+          history: s.history || []
+        };
+      }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(defaults));
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var state = load();
+  if (state.session.last && Date.now() - state.session.last > SESSION_GAP) {
+    state.session = Object.assign({}, defaults.session);
+  }
+  var T = I18N[state.lang];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var el = {
+    pine: $("sPine"), good: $("sGood"), bad: $("sBad"),
+    q: $("qText"), ans: $("answer"), fb: $("feedback"),
+    problem: $("problem"), burst: $("burst"),
+    dots: [$("d0"), $("d1"), $("d2")],
+    timer: $("timer"), timefill: $("timefill"), timenum: $("timenum"),
+    sheet: $("sheetBg"),
+    cw: $("cw"), cwFb: $("cwFb")
+  };
+
+  // ---------- problems ----------
+  var current = null;
+  var input = "";
+  var locked = false;
+  var retry = [];          // problems answered wrong, asked again soon
+  var recent = [];         // avoid immediate repeats
+
+  function rnd(n) { return Math.floor(Math.random() * n); }
+
+  function makeProblem() {
+    // a wrongly answered problem comes back after a couple of others
+    for (var i = 0; i < retry.length; i++) {
+      if (retry[i].wait <= 0) return retry.splice(i, 1)[0].p;
+    }
+    var p, key, tries = 0;
+    do {
+      var n = state.nums[rnd(state.nums.length)];
+      var m = 1 + rnd(10);
+      var op = state.ops[rnd(state.ops.length)];
+      if (op === "mul") {
+        p = Math.random() < 0.5
+          ? { op: op, n: n, m: m, text: n + " · " + m, result: n * m }
+          : { op: op, n: n, m: m, text: m + " · " + n, result: n * m };
+      } else {
+        p = { op: op, n: n, m: m, text: (n * m) + " : " + n, result: m };
+      }
+      key = p.text;
+      tries++;
+    } while (recent.indexOf(key) !== -1 && tries < 30);
+    recent.push(key);
+    if (recent.length > 8) recent.shift();
+    return p;
+  }
+
+  function next() {
+    retry.forEach(function (r) { r.wait--; });
+    current = makeProblem();
+    input = "";
+    locked = false;
+    el.q.textContent = current.text;
+    el.ans.textContent = "";
+    el.ans.className = "answer";
+    el.fb.textContent = "";
+    el.fb.className = "feedback";
+    startTimer();
+  }
+
+  // ---------- answer timer ----------
+  var timeLeft = 0, lastTick = 0, timerId = 0;
+
+  function startTimer() {
+    stopTimer();
+    el.timer.hidden = !state.timer || state.mode !== "table";
+    if (el.timer.hidden) return;
+    timeLeft = state.timer * 1000;
+    drawTimer();
+    resumeTimer();
+  }
+  function resumeTimer() {
+    if (!state.timer || locked || timerId || timeLeft <= 0) return;
+    if (state.mode !== "table") return;
+    if (anySheetOpen()) return;
+    lastTick = Date.now();
+    timerId = setInterval(tick, 50);
+  }
+  function stopTimer() {
+    if (timerId) clearInterval(timerId);
+    timerId = 0;
+  }
+  function tick() {
+    var now = Date.now();
+    timeLeft -= now - lastTick;
+    lastTick = now;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      stopTimer();
+      drawTimer();
+      locked = true;
+      fail(T.timeUp);
+      return;
+    }
+    drawTimer();
+  }
+  function drawTimer() {
+    var f = timeLeft / (state.timer * 1000);
+    el.timefill.style.width = (f * 100) + "%";
+    el.timefill.classList.toggle("low", f < 0.3);
+    el.timer.classList.toggle("low", f < 0.3);
+    el.timenum.textContent = Math.ceil(timeLeft / 1000);
+  }
+
+  function render() {
+    el.pine.textContent = state.session.pine;
+    el.good.textContent = state.session.good;
+    el.bad.textContent = state.session.bad;
+    for (var i = 0; i < 3; i++) {
+      el.dots[i].classList.toggle("on", i < state.session.toward);
+    }
+  }
+
+  function restart(node, cls) {
+    node.classList.remove(cls);
+    void node.offsetWidth;
+    node.classList.add(cls);
+  }
+
+  function check() {
+    if (locked || input === "") return;
+    locked = true;
+    stopTimer();
+    var val = parseInt(input, 10);
+    var s = state.session;
+    if (val === current.result) {
+      s.good++; s.streak++; s.toward++;
+      state.best.solved++;
+      if (s.streak > state.best.streak) state.best.streak = s.streak;
+      el.ans.className = "answer good";
+      el.fb.className = "feedback good";
+      var delay = 650;
+      if (s.toward >= 3) {
+        // every 3 correct answers earn a kitten (stored as "pine" for older saves)
+        s.toward = 0; s.pine++;
+        state.best.pine++;
+        var cat = CATS[rnd(CATS.length)];
+        el.fb.textContent = T.gotCat + " " + cat;
+        el.burst.textContent = cat;
+        restart(el.burst, "show");
+        sound("cat");
+        delay = 1000;
+      } else {
+        el.fb.textContent = T.great[rnd(T.great.length)];
+        sound("good");
+      }
+      restart(el.problem, "pop");
+      record(true, input);
+      save(); render();
+      setTimeout(next, delay);
+    } else {
+      fail(T.rightIs);
+    }
+  }
+
+  function fail(prefix) {
+    var s = state.session;
+    s.bad++; s.streak = 0;
+    el.ans.className = "answer bad";
+    el.fb.className = "feedback bad";
+    el.fb.textContent = prefix + current.text + " = " + current.result;
+    retry.push({ p: current, wait: 2 + rnd(2) });
+    restart(el.problem, "shake");
+    sound("bad");
+    record(false, input);
+    save(); render();
+    setTimeout(next, 2200);
+  }
+
+  // ---------- statistics ----------
+  function record(ok, typed) {
+    var key = current.op + ":" + current.n + ":" + current.m;
+    var f = state.facts[key] || (state.facts[key] = [0, 0]);
+    f[ok ? 0 : 1]++;
+    logSession(ok ? [] : [{ q: current.text, a: typed, r: current.result }], false);
+  }
+
+  function logSession(mistakes, crossSolved) {
+    var s = state.session, now = Date.now();
+    if (!s.start) s.start = now;
+    s.last = now;
+    var h = null;
+    for (var i = state.history.length - 1; i >= 0; i--) {
+      if (state.history[i].start === s.start) { h = state.history[i]; break; }
+    }
+    if (!h) {
+      h = { start: s.start, mistakes: [] };
+      state.history.push(h);
+      if (state.history.length > MAX_HISTORY) state.history.shift();
+    }
+    h.last = now; h.good = s.good; h.bad = s.bad; h.cats = s.pine;
+    if (crossSolved) h.cross = (h.cross || 0) + 1;
+    mistakes.forEach(function (m) {
+      if (h.mistakes.length < 200) h.mistakes.push(m);
+    });
+    return h;
+  }
+
+  // ---------- jumper game ----------
+  var gc = $("gameCanvas"), gx = gc.getContext("2d");
+  var GW = 0, GH = 0, ROW = 0, COL = {};
+  var G = null;
+  var CLOUDS = [];
+  for (var ci = 0; ci < 7; ci++) CLOUDS.push({ x: Math.random(), y: Math.random(), s: 0.6 + Math.random() * 0.8 });
+
+  function gameResize() {
+    var r = gc.getBoundingClientRect();
+    if (!r.width) return;
+    var dpr = window.devicePixelRatio || 1;
+    GW = r.width; GH = r.height; ROW = GH * 0.28;
+    gc.width = Math.round(GW * dpr); gc.height = Math.round(GH * dpr);
+    gx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    readColors();
+  }
+
+  function readColors() {
+    var cs = getComputedStyle(document.documentElement);
+    ["sky-top", "sky-bottom", "cloud", "grass", "soil", "card", "ink", "line", "good", "bad", "gold"].forEach(function (k) {
+      COL[k] = cs.getPropertyValue("--" + k).trim();
+    });
+  }
+
+  function buildProblem(op, n, m) {
+    if (op === "div") return { topic: "table", op: op, n: n, m: m, text: (n * m) + " : " + n, result: m };
+    return Math.random() < 0.5
+      ? { topic: "table", op: op, n: n, m: m, text: n + " · " + m, result: n * m }
+      : { topic: "table", op: op, n: n, m: m, text: m + " · " + n, result: n * m };
+  }
+
+  // ---------- 5th grade topics ----------
+  // Each generator returns { topic, text, result, wrong } where `wrong` holds
+  // two believable mistakes. Answers are strings: "7r5" is 7 remainder 5.
+  function between(a, b) { return a + rnd(b - a + 1); }
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function frac(n, d) { return n + "/" + d; }
+
+  function twoWrong(right, list, ok) {
+    var out = [];
+    shuffle(list.slice()).forEach(function (v) {
+      v = String(v);
+      if (out.length < 2 && v !== String(right) && out.indexOf(v) === -1 && (!ok || ok(v))) out.push(v);
+    });
+    return out.length === 2 ? out : null;
+  }
+  var wholePositive = function (v) { return /^\d+$/.test(v) && +v > 0; };
+
+  function orderProblem() {
+    var a, b, c, k, text, right, list;
+    switch (rnd(7)) {
+      case 0:   // multiplication before addition
+        a = between(2, 20); b = between(2, 9); c = between(2, 9);
+        text = a + " + " + b + " · " + c; right = a + b * c;
+        list = [(a + b) * c, right + c, right - b, a * b + c];
+        break;
+      case 1:
+        b = between(2, 6); c = between(2, 6); a = b * c + between(1, 20);
+        text = a + " − " + b + " · " + c; right = a - b * c;
+        list = [(a - b) * c, right + b, right + c];
+        break;
+      case 2:   // division before addition
+        c = between(2, 9); k = between(2, 9); b = c * k; a = between(2, 20);
+        text = a + " + " + b + " : " + c; right = a + k;
+        list = [(a + b) / c, a + b, right + c, right - 1];
+        break;
+      case 3:   // brackets first
+        a = between(2, 12); b = between(2, 9); c = between(2, 9);
+        text = "(" + a + " + " + b + ") · " + c; right = (a + b) * c;
+        list = [a + b * c, a * c + b, right + c];
+        break;
+      case 4:
+        a = between(2, 9); c = between(1, 6); b = c + between(2, 8);
+        text = a + " · (" + b + " − " + c + ")"; right = a * (b - c);
+        list = [a * b - c, a * (b + c), right + a];
+        break;
+      case 5:   // left to right, not "addition first"
+        b = between(2, 15); c = between(2, 15); a = b + c + between(1, 30);
+        text = a + " − " + b + " + " + c; right = a - b + c;
+        list = [a - (b + c), right + 1, right - 2];
+        break;
+      default:  // left to right with : and ·
+        b = between(2, 5); c = between(2, 5); k = between(2, 5); a = b * c * k;
+        text = a + " : " + b + " · " + c; right = (a / b) * c;
+        list = [a / (b * c), a / b + c, right + c];
+    }
+    var wrong = twoWrong(right, list, wholePositive);
+    return wrong ? { topic: "order", text: text, result: String(right), wrong: wrong } : orderProblem();
+  }
+
+  function remProblem() {
+    var b = between(3, 9), q = between(2, 10), r = between(1, b - 1), a = b * q + r;
+    var wrong = twoWrong(q + "r" + r, [
+      q + "r" + (r + 1 < b ? r + 1 : r - 1),
+      (q - 1) + "r" + (r + b),          // remainder bigger than the divisor
+      (q + 1) + "r" + r
+    ], function (v) { return !/^0r|r0$/.test(v); });
+    return wrong ? { topic: "rem", text: a + " : " + b, result: q + "r" + r, wrong: wrong } : remProblem();
+  }
+
+  function fracProblem() {
+    var a, b, d, n, k, g, w, r, text, right, list, extra = {};
+    switch (rnd(6)) {
+      case 0:   // fraction times a whole number
+        do { b = between(2, 10); a = between(1, b - 1); } while (gcd(a, b) !== 1);
+        k = between(2, 10); n = b * k;
+        text = frac(a, b) + " · " + n; right = String(a * k);
+        list = [k, a * n, a * k + k, a * k - k];
+        break;
+      case 1:   // simplify
+        do { b = between(2, 9); a = between(1, b - 1); } while (gcd(a, b) !== 1);
+        g = between(2, 5);
+        text = frac(a * g, b * g); right = frac(a, b);
+        list = [frac(a, b * g), frac(a * g, b), frac(b, a), frac(a + 1, b)];
+        break;
+      case 2:   // same denominators: add
+        do { d = between(5, 12); a = between(1, d - 2); b = between(1, d - 1 - a); } while (gcd(a + b, d) !== 1);
+        text = frac(a, d) + " + " + frac(b, d); right = frac(a + b, d);
+        list = [frac(a + b, d * 2), frac(a + b + 1, d), frac(a + b - 1, d)];
+        break;
+      case 3:   // same denominators: subtract
+        do { d = between(5, 12); a = between(2, d - 1); b = between(1, a - 1); } while (gcd(a - b, d) !== 1);
+        text = frac(a, d) + " − " + frac(b, d); right = frac(a - b, d);
+        list = [frac(a + b, d), frac(a - b + 1, d), frac(a - b - 1, d)];
+        break;
+      case 4:   // which is bigger
+        var x, y;
+        do {
+          b = between(2, 12); a = between(1, b - 1);
+          if (rnd(3) === 0) { d = b; n = between(1, d - 1); }          // same denominator
+          else if (rnd(2)) { n = a; d = between(a + 1, 12); }          // same numerator
+          else { d = between(2, 12); n = between(1, d - 1); }
+        } while (a * d === n * b && rnd(4));                           // equal only sometimes
+        x = frac(a, b); y = frac(n, d);
+        if (x === y) { n = a * 2; d = b * 2; y = frac(n, d); }
+        right = a * d > n * b ? x : a * d < n * b ? y : "=";
+        text = x + " ? " + y;
+        extra = { ask: "bigger", sol: x + (right === x ? " > " : right === y ? " < " : " = ") + y };
+        list = [x, y, "="];
+        break;
+      default:  // improper fraction to a mixed number
+        d = between(2, 9); w = between(1, 4); r = between(1, d - 1);
+        text = frac(d * w + r, d); right = w + " " + frac(r, d);
+        list = [w + " " + frac(r + 1 < d ? r + 1 : r - 1, d), (w + 1) + " " + frac(r, d), w + " " + frac(d - r, d)];
+    }
+    var wrong = twoWrong(right, list, function (v) { return !/(^|\D)0\/|\/0|^0 |^-/.test(v) && v !== "0"; });
+    if (!wrong) return fracProblem();
+    var p = { topic: "frac", text: text, result: right, wrong: wrong };
+    if (extra.ask) { p.ask = extra.ask; p.sol = extra.sol; }
+    return p;
+  }
+
+  function divisorsOf(n) {
+    var d = [];
+    for (var i = 1; i <= n; i++) if (n % i === 0) d.push(i);
+    return d;
+  }
+  function pickOne(a) { return a[rnd(a.length)]; }
+
+  function divsProblem() {
+    var n, k, ds, right, list, sol, ask, i;
+    var t = rnd(6);
+    if (t <= 1) {
+      do { n = between(12, 60); ds = divisorsOf(n); } while (ds.length < 5);
+      var mid = ds.slice(1, -1), non = [];
+      for (i = 2; i <= n / 2 + 1; i++) if (n % i) non.push(i);
+      if (t === 0) {
+        ask = "divisorOf"; right = pickOne(mid); list = non;
+        sol = n + " : " + right + " = " + n / right;
+      } else {
+        ask = "notDivisorOf"; right = pickOne(non); list = mid;
+        sol = n + " : " + right + " = " + label(Math.floor(n / right) + "r" + n % right);
+      }
+    } else if (t === 2) {
+      do { n = between(6, 48); ds = divisorsOf(n); } while (ds.length < 3);
+      // typical slips: forgetting 1 or the number itself
+      ask = "countDivs"; right = ds.length; list = [right - 1, right - 2, right + 1, right + 2];
+      sol = n + ": " + ds.join(", ");
+    } else if (t === 3) {
+      n = pickOne([4, 6, 8, 9, 10, 14, 15, 21, 22, 25, 26, 27, 33, 34, 35, 38, 39, 46, 49, 51, 55]);
+      ds = divisorsOf(n);
+      ask = "allDivs"; right = ds.join(",");
+      list = [ds.slice(1, -1).join(","), ds.slice(0, -1).join(","), ds.filter(function (x, j) { return j !== 1; }).join(",")];
+      sol = n + ": " + ds.join(", ");
+    } else if (t === 4) {
+      ask = "whichPrime";
+      right = pickOne([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59]);
+      list = [1, 9, 15, 21, 25, 27, 33, 39, 49, 51, 57];   // 1 is not prime, the odd ones look prime
+      sol = right + ": 1, " + right;
+      n = right;
+    } else {
+      ask = "divisibleBy"; k = pickOne([2, 3, 4, 5, 9, 10]);
+      do { right = between(100, 999); } while (right % k);
+      list = [];
+      while (list.length < 6) {
+        var x = between(100, 999);
+        if (x % k === 0) continue;
+        // traps that pass a wrong rule
+        if (k === 3 && x % 10 !== 3 && rnd(2)) continue;           // "ends in 3"
+        if (k === 9 && x % 3 !== 0 && rnd(3)) continue;            // divisible by 3, not 9
+        if (k === 4 && x % 2 !== 0) continue;                      // even, not by 4
+        if (k === 10 && x % 5 !== 0 && rnd(3)) continue;           // ends in 5
+        list.push(x);
+      }
+      sol = right + " : " + k + " = " + right / k;
+      n = right;
+    }
+    var wrong = twoWrong(right, list, function (v) { return v !== "" && v !== "0" && !/^-/.test(v); });
+    if (!wrong) return divsProblem();
+    return { topic: "divs", text: ask + "|" + n + "|" + (k || "") + "|" + right, ask: ask, n: n, k: k,
+             result: String(right), wrong: wrong, sol: sol };
+  }
+
+  function primeFactors(n) {
+    var f = [];
+    for (var d = 2; n > 1; d++) while (n % d === 0) { f.push(d); n /= d; }
+    return f;
+  }
+
+  function gcdProblem() {
+    var a, b, fn, right, list, x, y, g;
+    if (rnd(2)) {
+      fn = "gcd";
+      do { g = between(2, 9); x = between(1, 9); y = between(2, 9); a = g * x; b = g * y; }
+      while (x === y || gcd(x, y) !== 1 || a > 90 || b > 90);
+      right = g;
+      // a common divisor that isn't the greatest, the LCM, or just the smaller number
+      list = divisorsOf(g).filter(function (d) { return d < g; }).concat([a * b / g, Math.min(a, b), g * 2]);
+    } else {
+      fn = "lcm";
+      do { a = between(2, 15); b = between(2, 15); right = a * b / gcd(a, b); }
+      while (a === b || right > 120 || (right === Math.max(a, b) && rnd(2)));
+      // multiplying the numbers, the GCD, or just the bigger number
+      list = [a * b, gcd(a, b), Math.max(a, b), right * 2];
+    }
+    var wrong = twoWrong(right, list, wholePositive);
+    if (!wrong) return gcdProblem();
+    return { topic: "gcd", fn: fn, a: a, b: b, text: fn + "(" + a + "," + b + ")", result: String(right), wrong: wrong };
+  }
+
+  function primesProblem() {
+    var n, f;
+    do { n = between(12, 120); f = primeFactors(n); } while (f.length < 3 || f[f.length - 1] > 13);
+    var num = function (x, y) { return x - y; };
+    var nextPrime = { 2: 3, 3: 5, 5: 7, 7: 11, 11: 13, 13: 17 };
+    var swapped = f.slice(), si = rnd(f.length);
+    swapped[si] = nextPrime[f[si]];
+    var list = [
+      [f[0] * f[1]].concat(f.slice(2)).sort(num).join("·"),                        // 4 is not prime
+      f.slice(0, -2).concat([f[f.length - 2] * f[f.length - 1]]).sort(num).join("·"),
+      f.slice(0, -1).join("·"),                                                      // a factor is missing
+      swapped.sort(num).join("·")
+    ];
+    var right = f.join("·");
+    // a wrong option either multiplies to another number or uses a factor that isn't prime
+    var wrong = twoWrong(right, list, function (v) {
+      var parts = v.split("·").map(Number);
+      return parts.reduce(function (m, x) { return m * x; }, 1) !== n ||
+        parts.some(function (x) { return primeFactors(x).length !== 1; });
+    });
+    if (!wrong) return primesProblem();
+    return { topic: "primes", text: String(n), result: right, wrong: wrong };
+  }
+
+  var GENERATORS = { order: orderProblem, rem: remProblem, frac: fracProblem, divs: divsProblem,
+                     gcd: gcdProblem, primes: primesProblem };
+
+  // how answers and questions are shown, in the current language
+  function label(v) {
+    return String(v).replace(/^(\d+)r(\d+)$/, function (_, q, r) { return q + " " + T.rem + " " + r; });
+  }
+  function showQ(p) {
+    if (p.ask === "bigger") return T.bigger + "\n" + p.text.replace(" ? ", " " + T.or + " ");
+    if (p.ask) return T[p.ask].replace("{n}", p.n).replace("{k}", p.k);
+    if (p.fn) return T[p.fn] + "(" + p.a + ", " + p.b + ") = ?";
+    return p.text + " = ?";
+  }
+  var labelText = label;
+  function solQ(p) {
+    if (p.fn) return T[p.fn] + "(" + p.a + ", " + p.b + ") = " + p.result;
+    return p.sol || p.text + " = " + label(p.result);
+  }
+  function isRight(p, v) { return String(v) === String(p.result); }
+  function gameOptions(p) {
+    return shuffle([String(p.result)].concat((p.wrong || distractors(p)).map(String)));
+  }
+
+  function gameProblem(ctx) {
+    // a missed example comes back after a couple of jumps
+    ctx.retry.forEach(function (r) { r.wait--; });
+    for (var i = 0; i < ctx.retry.length; i++) {
+      if (ctx.retry[i].wait <= 0) return ctx.retry.splice(i, 1)[0].p;
+    }
+    // examples he often gets wrong come up more often
+    var weak = [], total = 0;
+    if (state.topics.indexOf("table") !== -1) {
+      Object.keys(state.facts).forEach(function (k) {
+        var parts = k.split(":"), f = state.facts[k];
+        if (state.ops.indexOf(parts[0]) === -1 || state.nums.indexOf(+parts[1]) === -1) return;
+        var rate = f[1] / (f[0] + f[1]);
+        if (f[1] && rate > 0.2) { weak.push({ op: parts[0], n: +parts[1], m: +parts[2], w: rate }); total += rate; }
+      });
+    }
+    Object.keys(state.topicFacts).forEach(function (k) {
+      var f = state.topicFacts[k], rate = f.b / (f.g + f.b);
+      if (state.topics.indexOf(f.p.topic) === -1) return;
+      if (f.b && rate > 0.2) { weak.push({ p: f.p, w: rate }); total += rate; }
+    });
+    if (weak.length && Math.random() < 0.35) {
+      var x = Math.random() * total;
+      for (i = 0; i < weak.length; i++) {
+        x -= weak[i].w;
+        if (x > 0) continue;
+        var wp = weak[i].p ? JSON.parse(JSON.stringify(weak[i].p)) : buildProblem(weak[i].op, weak[i].n, weak[i].m);
+        // not the one just asked; it comes back through the retry queue instead
+        if (ctx.recent.indexOf(wp.text) !== -1) break;
+        ctx.recent.push(wp.text);
+        if (ctx.recent.length > 8) ctx.recent.shift();
+        return wp;
+      }
+    }
+    var p, tries = 0;
+    do {
+      var topic = state.topics[rnd(state.topics.length)];
+      p = topic === "table"
+        ? buildProblem(state.ops[rnd(state.ops.length)], state.nums[rnd(state.nums.length)], 1 + rnd(10))
+        : GENERATORS[topic]();
+    } while (ctx.recent.indexOf(p.text) !== -1 && ++tries < 30);
+    ctx.recent.push(p.text);
+    if (ctx.recent.length > 8) ctx.recent.shift();
+    return p;
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+
+  // wrong options that look like real mistakes: neighbours in the table
+  function distractors(p) {
+    var r = p.result, near, far;
+    if (p.op === "mul") {
+      near = [p.n * (p.m - 1), p.n * (p.m + 1), (p.n - 1) * p.m, (p.n + 1) * p.m];
+      far = [r + 2, r - 2, r + 10, r - 10, r + 1, r - 1];
+    } else {
+      near = [r - 1, r + 1];
+      far = [r + 2, r - 2, r + 3];
+    }
+    var all = shuffle(near).concat(shuffle(far)), out = [];
+    for (var i = 0; i < all.length && out.length < 2; i++) {
+      if (all[i] > 0 && all[i] !== r && out.indexOf(all[i]) === -1) out.push(all[i]);
+    }
+    return out;
+  }
+
+  function startGame() {
+    G = {
+      t: 0, phase: "choose", hearts: 3, height: 0, streak: 0, correct: 0, cats: 0,
+      bestAtStart: state.best.height,
+      catRow: 0, catLane: 1, prevLane: -1, cam: 0,
+      row: null, anim: null, wait: null, face: "😺", faceUntil: 0,
+      qStart: 0, qBudget: 0, retry: [], recent: [], hint: true
+    };
+    $("gameOver").hidden = true;
+    gameMsg(T.gameHint, false);
+    newRow();
+  }
+
+  function gameMsg(text, bad) {
+    var m = $("hMsg");
+    m.textContent = text;
+    m.className = "hud-msg" + (bad ? " bad" : "");
+  }
+
+  function newRow() {
+    var p = gameProblem(G);
+    var opts = gameOptions(p);
+    G.row = { p: p, opts: opts, born: G.t, plats: [0, 1, 2].map(function () { return { st: "idle", dy: 0, vy: 0 }; }) };
+    G.phase = "choose";
+    G.qStart = G.t;
+    // speed comes only after a run of correct answers
+    G.qBudget = G.streak >= 5 ? Math.max(4000, 10000 - (G.streak - 5) * 400) : 0;
+    $("hTime").hidden = !G.qBudget;
+    if (!G.hint) gameMsg("", false);
+    drawHud();
+  }
+
+  function drawHud() {
+    var h = "";
+    for (var i = 0; i < 3; i++) h += i < G.hearts ? "❤️" : "🤍";
+    $("hHearts").textContent = h;
+    $("hHeight").textContent = "⬆ " + G.height;
+    var q = G.row ? showQ(G.row.p) : "";
+    $("hQ").textContent = q;
+    $("hQ").classList.toggle("long", q.length > 14);
+  }
+
+  function laneX(lane) { return (lane + 0.5) * GW / 3; }
+  function rowY(row) { return GH * 0.8 - (row * ROW - G.cam); }
+
+  function setFace(f, ms) { G.face = f; G.faceUntil = G.t + ms; }
+
+  function choose(lane) {
+    if (!G || G.phase !== "choose") return;
+    G.phase = "jump";
+    G.hint = false;
+    gameMsg("", false);
+    $("hTime").hidden = true;
+    sound("jump");
+    G.anim = {
+      t0: G.t, dur: 520, arc: 0.55,
+      x0: laneX(G.catLane), r0: G.catRow, x1: laneX(lane), r1: G.catRow + 1,
+      end: function () { land(lane); }
+    };
+  }
+
+  function gameRecord(ok, p, chosen) {
+    if (p.topic === "table") {
+      var key = p.op + ":" + p.n + ":" + p.m;
+      var f = state.facts[key] || (state.facts[key] = [0, 0]);
+      f[ok ? 0 : 1]++;
+    } else {
+      var tk = p.topic + "|" + p.text;
+      var tf = state.topicFacts[tk] || (state.topicFacts[tk] = { g: 0, b: 0, p: p });
+      tf[ok ? "g" : "b"]++;
+    }
+    var s = state.session;
+    if (ok) {
+      s.good++; s.streak++; state.best.solved++;
+      if (s.streak > state.best.streak) state.best.streak = s.streak;
+    } else {
+      s.bad++; s.streak = 0;
+    }
+    var miss = { q: p.text, a: chosen === "" ? "" : String(chosen), r: String(p.result) };
+    if (p.ask || p.fn) { miss.q = showQ(p).replace(/\n/g, " "); miss.k = 1; }
+    var h = logSession(ok ? [] : [miss], false);
+    return h;
+  }
+
+  function land(lane) {
+    var row = G.row, ok = isRight(row.p, row.opts[lane]);
+    if (ok) {
+      row.plats[lane].st = "good";
+      G.prevLane = G.catLane;
+      G.catRow++; G.catLane = lane;
+      G.height++; G.streak++; G.correct++;
+      if (G.height > state.best.height) state.best.height = G.height;
+      setFace("😸", 700);
+      if (G.correct % 5 === 0) {
+        // a kitten for every 5 correct jumps
+        G.cats++; state.session.pine++; state.best.pine++;
+        var cat = CATS[rnd(CATS.length)];
+        el.burst.textContent = cat;
+        restart(el.burst, "show");
+        sound("cat");
+        gameMsg(T.gotCat + " " + cat, false);
+      } else {
+        sound("good");
+      }
+      var h = gameRecord(true, row.p, row.opts[lane]);
+      h.height = Math.max(h.height || 0, G.height);
+      save(); render();
+      G.row = null;
+      G.phase = "wait";
+      G.wait = { at: G.t + 300, fn: newRow };
+      drawHud();
+    } else {
+      row.plats[lane].st = "bad";
+      miss(row, row.opts[lane]);
+      // the platform crumbles and the cat drops back
+      G.anim = {
+        t0: G.t, dur: 450, arc: 0.15,
+        x0: laneX(lane), r0: G.catRow + 1, x1: laneX(G.catLane), r1: G.catRow,
+        end: reveal
+      };
+    }
+  }
+
+  function miss(row, chosen) {
+    G.hearts--; G.streak = 0;
+    G.retry.push({ p: row.p, wait: 2 + rnd(2) });
+    gameRecord(false, row.p, chosen);
+    setFace("🙀", 1600);
+    sound("bad");
+    save(); render(); drawHud();
+  }
+
+  function reveal() {
+    var row = G.row;
+    G.phase = "reveal";
+    row.plats[row.opts.indexOf(String(row.p.result))].st = "good";
+    gameMsg(T.rightIs + solQ(row.p), true);
+    G.wait = { at: G.t + 1600, fn: G.hearts > 0 ? newRow : gameOver };
+  }
+
+  function timeUp() {
+    G.phase = "reveal";
+    $("hTime").hidden = true;
+    miss(G.row, "");
+    reveal();
+  }
+
+  function gameOver() {
+    G.phase = "over";
+    var rec = G.height > G.bestAtStart && G.height > 0;
+    $("overStats").innerHTML =
+      T.heightL + ": <b>" + G.height + "</b><br>" +
+      T.recordL + ": <b>" + state.best.height + "</b><br>" +
+      "🐱 +" + G.cats +
+      (rec ? "<br><b>" + T.newRecord + "</b>" : "");
+    $("gameOver").querySelector(".over-cat").textContent = rec ? "😻" : "😿";
+    $("gameOver").hidden = false;
+    gameMsg("", false);
+  }
+
+  function update(dt) {
+    G.t += dt;
+    var a = G.anim;
+    if (a && G.t - a.t0 >= a.dur) { G.anim = null; a.end(); }
+    if (G.wait && G.t >= G.wait.at) { var w = G.wait; G.wait = null; w.fn(); }
+    if (G.row) {
+      G.row.plats.forEach(function (pl) {
+        if (pl.st === "bad") { pl.vy += 0.0025 * dt; pl.dy += pl.vy * dt; }
+      });
+    }
+    G.cam += (G.catRow * ROW - G.cam) * Math.min(1, dt * 0.008);
+    if (G.face !== "😺" && G.t > G.faceUntil) G.face = "😺";
+    if (G.phase === "choose" && G.qBudget) {
+      var left = 1 - (G.t - G.qStart) / G.qBudget;
+      $("hTimeFill").style.width = Math.max(0, left * 100) + "%";
+      if (left <= 0) timeUp();
+    }
+  }
+
+  function rrect(x, y, w, h, r) {
+    gx.beginPath();
+    gx.moveTo(x + r, y);
+    gx.arcTo(x + w, y, x + w, y + h, r);
+    gx.arcTo(x + w, y + h, x, y + h, r);
+    gx.arcTo(x, y + h, x, y, r);
+    gx.arcTo(x, y, x + w, y, r);
+    gx.closePath();
+  }
+
+  function drawPlatform(x, y, st, label, scale) {
+    if (scale === undefined) scale = 1;
+    var w = GW / 3 * 0.8 * scale, h = 16;
+    gx.fillStyle = COL.soil;
+    rrect(x - w / 2, y + 6, w, 12, 6); gx.fill();
+    gx.fillStyle = st === "good" ? COL.good : st === "bad" ? COL.bad : COL.grass;
+    rrect(x - w / 2, y, w, h - 4, 6); gx.fill();
+    if (label === undefined) return;
+    label = typeof label === "string" || typeof label === "number" ? labelText(label) : label;
+    var fs = Math.round(Math.min(34, GW * 0.085) * scale);
+    gx.font = "800 " + fs + "px system-ui, sans-serif";
+    var maxW = GW / 3 * 0.94, tw0 = gx.measureText(label).width + 26;
+    if (tw0 > maxW) {
+      fs = Math.max(12, Math.floor(fs * maxW / tw0));
+      gx.font = "800 " + fs + "px system-ui, sans-serif";
+    }
+    var tw = Math.max(gx.measureText(label).width + 26, fs * 2);
+    var ph = fs + 14, py = y - ph - 10;
+    gx.fillStyle = COL.card;
+    rrect(x - tw / 2, py, tw, ph, 12); gx.fill();
+    gx.lineWidth = 3;
+    gx.strokeStyle = st === "good" ? COL.good : st === "bad" ? COL.bad : COL.line;
+    gx.stroke();
+    gx.fillStyle = st === "bad" ? COL.bad : COL.ink;
+    gx.textAlign = "center"; gx.textBaseline = "middle";
+    gx.fillText(label, x, py + ph / 2 + 1);
+  }
+
+  function draw() {
+    if (!GW) return;
+    var g = gx.createLinearGradient(0, 0, 0, GH);
+    g.addColorStop(0, COL["sky-top"]); g.addColorStop(1, COL["sky-bottom"]);
+    gx.fillStyle = g;
+    gx.fillRect(0, 0, GW, GH);
+
+    // clouds drift down slowly as the cat climbs
+    gx.fillStyle = COL.cloud;
+    var span = GH * 1.6;
+    CLOUDS.forEach(function (c) {
+      var y = ((c.y * span + G.cam * 0.35) % span) - GH * 0.3, x = c.x * GW, r = GW * 0.06 * c.s;
+      gx.beginPath();
+      gx.arc(x, y, r, 0, Math.PI * 2);
+      gx.arc(x + r * 1.1, y + r * 0.2, r * 0.8, 0, Math.PI * 2);
+      gx.arc(x - r * 1.1, y + r * 0.25, r * 0.7, 0, Math.PI * 2);
+      gx.fill();
+    });
+
+    if (G.prevLane >= 0) drawPlatform(laneX(G.prevLane), rowY(G.catRow - 1), "idle");
+    drawPlatform(laneX(G.catLane), rowY(G.catRow), "idle");
+
+    if (G.row) {
+      var sc = Math.min(1, (G.t - G.row.born) / 220);
+      G.row.plats.forEach(function (pl, lane) {
+        if (pl.dy > GH) return;
+        gx.save();
+        gx.globalAlpha = pl.st === "bad" ? Math.max(0, 1 - pl.dy / 300) : 1;
+        drawPlatform(laneX(lane), rowY(G.catRow + 1) + pl.dy, pl.st, G.row.opts[lane], 0.3 + 0.7 * sc);
+        gx.restore();
+      });
+    }
+
+    // the cat: on its platform, or flying along an arc
+    var cx, cy, a = G.anim;
+    if (a) {
+      var k = (G.t - a.t0) / a.dur;
+      cx = a.x0 + (a.x1 - a.x0) * k;
+      cy = rowY(a.r0) + (rowY(a.r1) - rowY(a.r0)) * k - Math.sin(Math.PI * k) * ROW * a.arc;
+    } else {
+      cx = laneX(G.catLane);
+      cy = rowY(G.catRow) - (G.phase === "choose" ? Math.abs(Math.sin(G.t / 280)) * 8 : 0);
+    }
+    var size = Math.min(60, ROW * 0.42);
+    gx.font = size + "px system-ui, sans-serif";
+    gx.textAlign = "center"; gx.textBaseline = "alphabetic";
+    gx.fillText(G.face, cx, cy - size * 0.1);
+  }
+
+  // drawing loop; the interval keeps it going where animation frames are throttled
+  var lastFrame = 0, rafOn = false;
+  function gameActive() {
+    return state.mode === "game" && G && G.phase !== "over" && !anySheetOpen() && !document.hidden;
+  }
+  function frame() {
+    rafOn = false;
+    var now = performance.now();
+    if (!gameActive()) { lastFrame = now; return; }
+    var dt = Math.min(50, now - lastFrame);
+    lastFrame = now;
+    update(dt);
+    draw();
+    if (!rafOn) { rafOn = true; requestAnimationFrame(frame); }
+  }
+  setInterval(function () {
+    if (gameActive() && performance.now() - lastFrame > 120) frame();
+    else if (!gameActive() && state.mode === "game" && G) draw();
+  }, 100);
+
+  gc.addEventListener("pointerdown", function (e) {
+    var r = gc.getBoundingClientRect();
+    choose(Math.min(2, Math.floor((e.clientX - r.left) / (r.width / 3))));
+  });
+  $("btnAgain").addEventListener("click", function () { startGame(); lastFrame = performance.now(); frame(); });
+  window.addEventListener("resize", function () {
+    if (state.mode === "game") { gameResize(); draw(); }
+    if (state.mode === "dash") { dashResize(); dashDraw(); }
+    if (state.mode === "cross") fitCross();
+  });
+
+  // ---------- dash game ----------
+  // The cat runs by itself. Gates with answers come at it:
+  // jump over the wrong ones, run through the right one.
+  var dc = $("dashCanvas"), dx = dc.getContext("2d");
+  var DW = 0, DH = 0, GROUND = 0, GATE_H = 0, CAT_X = 0, GRAV = 0, JUMP_V = 0;
+  var JUMP_T = 900;          // ms in the air
+  var D = null;
+
+  function dashResize() {
+    var r = dc.getBoundingClientRect();
+    if (!r.width) return;
+    var dpr = window.devicePixelRatio || 1;
+    DW = r.width; DH = r.height;
+    dc.width = Math.round(DW * dpr); dc.height = Math.round(DH * dpr);
+    dx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    GROUND = DH * 0.8;
+    GATE_H = DH * 0.2;
+    CAT_X = DW * 0.2;
+    var apex = GATE_H * 2.1;
+    GRAV = 8 * apex / (JUMP_T * JUMP_T);
+    JUMP_V = 4 * apex / JUMP_T;
+    readColors();
+  }
+
+  function startDash() {
+    D = {
+      t: 0, phase: "run", hearts: 3, dist: 0, streak: 0, correct: 0, cats: 0,
+      bestAtStart: state.best.dash,
+      y: 0, vy: 0, spin: 0, scroll: 0, gates: [], p: null, gap: 600,
+      retry: [], recent: [], face: "😺", faceUntil: 0, hint: true, wait: null
+    };
+    $("dashOver").hidden = true;
+    dashMsg(T.dashHint, false);
+    dashHud();
+  }
+
+  function dashMsg(text, bad) {
+    var m = $("dMsg");
+    m.textContent = text;
+    m.className = "hud-msg" + (bad ? " bad" : "");
+  }
+
+  function dashHud() {
+    var h = "";
+    for (var i = 0; i < 3; i++) h += i < D.hearts ? "❤️" : "🤍";
+    $("dHearts").textContent = h;
+    $("dDist").textContent = "🏁 " + Math.floor(D.dist) + " " + T.meters;
+    var q = D.p ? showQ(D.p) : "…";
+    $("dQ").textContent = q;
+    $("dQ").classList.toggle("long", q.length > 14);
+  }
+
+  // starts slow; speeds up only while answers keep being right
+  function dashSpeed() {
+    return DW * 0.82 / 2600 * (1 + Math.min(D.streak, 15) * 0.04);
+  }
+
+  function dashQuestion() {
+    var p = gameProblem(D);
+    var opts = gameOptions(p);
+    var spacing = DW * 0.62;
+    D.p = p;
+    D.gates = D.gates.concat(opts.map(function (v, i) {
+      return { x: DW + 60 + i * spacing, v: v, ok: isRight(p, v), p: p, st: "idle", fade: 1, tilt: 0 };
+    }));
+    if (!D.hint) dashMsg("", false);
+    dashHud();
+  }
+
+  function dashJump() {
+    if (!D || D.phase !== "run" || D.y > 0) return;
+    D.vy = JUMP_V;
+    D.y = 0.01;
+    if (D.hint) { D.hint = false; dashMsg("", false); }
+    sound("jump");
+  }
+
+  // the cat reaches the middle of a gate: decide what happened
+  function dashGate(g) {
+    var high = D.y > GATE_H * 0.85;
+    D.hint = false;
+    if (high && !g.ok) { g.st = "cleared"; return; }
+    if (!high && g.ok) return dashGood(g);
+    dashFail(g, high ? "—" : g.v, !high);
+  }
+
+  function closeQuestion(keep) {
+    D.gates.forEach(function (g) { if (g.st === "idle" && g !== keep) g.st = "gone"; });
+    D.p = null;
+  }
+
+  function dashGood(g) {
+    g.st = "good";
+    closeQuestion(g);
+    D.streak++; D.correct++;
+    setDashFace("😸", 700);
+    if (D.correct % 5 === 0) {
+      // a kitten for every 5 right gates
+      D.cats++; state.session.pine++; state.best.pine++;
+      var cat = CATS[rnd(CATS.length)];
+      el.burst.textContent = cat;
+      restart(el.burst, "show");
+      sound("cat");
+      dashMsg(T.gotCat + " " + cat, false);
+    } else {
+      sound("good");
+      if (!D.hint) dashMsg("", false);
+    }
+    var h = gameRecord(true, g.p, g.v);
+    h.dist = Math.max(h.dist || 0, Math.floor(D.dist));
+    save(); render();
+    D.gap = 700;
+    dashHud();
+  }
+
+  function dashFail(g, chosen, crash) {
+    var p = g.p;
+    D.hearts--; D.streak = 0;
+    D.retry.push({ p: p, wait: 2 + rnd(2) });
+    gameRecord(false, p, chosen);
+    // show where the right answer was
+    D.gates.forEach(function (x) { if (x.p === p && x.ok) x.st = "shown"; });
+    if (crash) { g.st = "bad"; }
+    else { g.st = "shown"; }
+    closeQuestion(null);
+    setDashFace("🙀", 1400);
+    sound("bad");
+    dashMsg(T.rightIs + solQ(p), true);
+    save(); render(); dashHud();
+    D.gap = 1800;
+    if (crash || !D.hearts) {
+      D.phase = "crash";
+      D.wait = { at: D.t + 900, fn: function () { if (D.hearts > 0) D.phase = "run"; else dashOver(); } };
+    }
+  }
+
+  function setDashFace(f, ms) { D.face = f; D.faceUntil = D.t + ms; }
+
+  function dashOver() {
+    D.phase = "over";
+    var d = Math.floor(D.dist);
+    var rec = d > D.bestAtStart && d > 0;
+    var h = logSession([], false);
+    h.dist = Math.max(h.dist || 0, d);
+    $("dashOverStats").innerHTML =
+      T.distL + ": <b>" + d + " " + T.meters + "</b><br>" +
+      T.recordL + ": <b>" + state.best.dash + " " + T.meters + "</b><br>" +
+      "🐱 +" + D.cats +
+      (rec ? "<br><b>" + T.newRecord + "</b>" : "");
+    $("dashOver").querySelector(".over-cat").textContent = rec ? "😻" : "😿";
+    $("dashOver").hidden = false;
+    dashMsg("", false);
+    save();
+  }
+
+  function dashUpdate(dt) {
+    D.t += dt;
+    if (D.wait && D.t >= D.wait.at) { var w = D.wait; D.wait = null; w.fn(); }
+    if (D.phase === "over") return;
+    var v = D.phase === "run" ? dashSpeed() : 0;
+    D.scroll += v * dt;
+    D.dist += v * dt / (DW * 0.12);
+    if (Math.floor(D.dist) > state.best.dash) state.best.dash = Math.floor(D.dist);
+
+    if (D.y > 0) {
+      D.y += D.vy * dt;
+      D.vy -= GRAV * dt;
+      D.spin += dt / JUMP_T * Math.PI * 2;
+      if (D.y <= 0) { D.y = 0; D.vy = 0; D.spin = 0; }
+    }
+
+    D.gates.forEach(function (g) {
+      g.x -= v * dt;
+      if (g.st === "idle" && D.phase === "run" && g.x <= CAT_X) dashGate(g);
+      if (g.st === "gone" || g.st === "cleared") g.fade = Math.max(0, g.fade - dt / 400);
+      if (g.st === "bad") g.tilt = Math.min(1.3, g.tilt + dt / 300);
+    });
+    D.gates = D.gates.filter(function (g) { return g.x > -DW * 0.3; });
+
+    if (!D.p && D.phase === "run") {
+      D.gap -= dt;
+      if (D.gap <= 0) dashQuestion();
+    }
+    if (D.face !== "😺" && D.t > D.faceUntil) D.face = "😺";
+    $("dDist").textContent = "🏁 " + Math.floor(D.dist) + " " + T.meters;
+  }
+
+  function dashRect(x, y, w, h, r) {
+    dx.beginPath();
+    dx.moveTo(x + r, y);
+    dx.arcTo(x + w, y, x + w, y + h, r);
+    dx.arcTo(x + w, y + h, x, y + h, r);
+    dx.arcTo(x, y + h, x, y, r);
+    dx.arcTo(x, y, x + w, y, r);
+    dx.closePath();
+  }
+
+  function dashDrawGate(g) {
+    var text = labelText(g.v);
+    var fs = Math.round(Math.min(34, Math.max(56, DW * 0.16) * 0.42));
+    dx.font = "800 " + fs + "px system-ui, sans-serif";
+    // wide answers ("7 r 5", "2 1/3") get a wider gate
+    var gw = Math.max(56, DW * 0.16, dx.measureText(text).width + 22), top = GROUND - GATE_H;
+    var colour = { good: COL.good, shown: COL.good, bad: COL.bad }[g.st] || COL.gold;
+    dx.save();
+    dx.globalAlpha = g.fade;
+    if (g.tilt) {
+      // a crashed gate falls over backwards
+      dx.translate(g.x + gw / 2, GROUND);
+      dx.rotate(g.tilt);
+      dx.translate(-(g.x + gw / 2), -GROUND);
+    }
+    dx.fillStyle = COL.card;
+    dx.globalAlpha = g.fade * 0.85;
+    dashRect(g.x - gw / 2, top, gw, GATE_H, 10); dx.fill();
+    dx.globalAlpha = g.fade;
+    dx.lineWidth = 6;
+    dx.strokeStyle = colour;
+    dx.stroke();
+    dx.font = "800 " + fs + "px system-ui, sans-serif";
+    dx.textAlign = "center"; dx.textBaseline = "middle";
+    dx.fillStyle = g.st === "bad" ? COL.bad : COL.ink;
+    dx.fillText(text, g.x, top + GATE_H / 2);
+    dx.restore();
+  }
+
+  function dashDraw() {
+    if (!DW || !D) return;
+    var g = dx.createLinearGradient(0, 0, 0, DH);
+    g.addColorStop(0, COL["sky-top"]); g.addColorStop(1, COL["sky-bottom"]);
+    dx.fillStyle = g;
+    dx.fillRect(0, 0, DW, DH);
+
+    // clouds and hills move slower than the ground
+    dx.fillStyle = COL.cloud;
+    CLOUDS.forEach(function (c) {
+      var span = DW * 1.4, x = span - ((c.x * span + D.scroll * 0.15) % span) - DW * 0.2;
+      var y = DH * (0.25 + c.y * 0.3), r = DW * 0.05 * c.s;
+      dx.beginPath();
+      dx.arc(x, y, r, 0, Math.PI * 2);
+      dx.arc(x + r * 1.1, y + r * 0.2, r * 0.8, 0, Math.PI * 2);
+      dx.arc(x - r * 1.1, y + r * 0.25, r * 0.7, 0, Math.PI * 2);
+      dx.fill();
+    });
+    dx.fillStyle = COL.grass;
+    dx.globalAlpha = 0.35;
+    dx.beginPath();
+    dx.moveTo(0, GROUND);
+    for (var x = 0; x <= DW + 10; x += 10) {
+      dx.lineTo(x, GROUND - DH * 0.06 - Math.sin((x + D.scroll * 0.3) / 70) * DH * 0.03);
+    }
+    dx.lineTo(DW, GROUND);
+    dx.fill();
+    dx.globalAlpha = 1;
+
+    dx.fillStyle = COL.grass;
+    dx.fillRect(0, GROUND, DW, 10);
+    dx.fillStyle = COL.soil;
+    dx.fillRect(0, GROUND + 10, DW, DH - GROUND - 10);
+    dx.fillStyle = "rgba(0, 0, 0, .12)";
+    for (x = -(D.scroll % 44); x < DW; x += 44) dx.fillRect(x, GROUND + 20, 22, 6);
+
+    D.gates.forEach(dashDrawGate);
+
+    // the cat spins in the air, like in Geometry Dash
+    var size = Math.min(56, DH * 0.1);
+    var cy = GROUND - D.y - size * 0.5;
+    var cx = CAT_X + (D.phase === "crash" ? Math.sin(D.t / 30) * 4 : 0);
+    if (!D.y && D.phase === "run") cy -= Math.abs(Math.sin(D.t / 90)) * 3;
+    dx.save();
+    dx.translate(cx, cy);
+    dx.rotate(D.spin);
+    dx.font = size + "px system-ui, sans-serif";
+    dx.textAlign = "center"; dx.textBaseline = "middle";
+    dx.fillStyle = "#000";   // an opaque fill, or the emoji inherits the stripes' transparency
+    dx.fillText(D.face, 0, 0);
+    dx.restore();
+  }
+
+  var dLast = 0, dRaf = false;
+  function dashActive() {
+    return state.mode === "dash" && D && D.phase !== "over" && !anySheetOpen() && !document.hidden;
+  }
+  function dashFrame() {
+    dRaf = false;
+    var now = performance.now();
+    if (!dashActive()) { dLast = now; return; }
+    var dt = Math.min(50, now - dLast);
+    dLast = now;
+    dashUpdate(dt);
+    dashDraw();
+    if (!dRaf) { dRaf = true; requestAnimationFrame(dashFrame); }
+  }
+  setInterval(function () {
+    if (dashActive() && performance.now() - dLast > 120) dashFrame();
+    else if (!dashActive() && state.mode === "dash" && D) dashDraw();
+  }, 100);
+
+  dc.addEventListener("pointerdown", dashJump);
+  $("btnDashAgain").addEventListener("click", function () { startDash(); dLast = performance.now(); dashFrame(); });
+
+  // ---------- crossword mode ----------
+  // cells 0..8:  a b c / d e f / g h i
+  // rows a·b=c, d·e=f, g·h=i and columns a·d=g, b·e=h, c·f=i
+  var EQS = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8]];
+  var cw = null;
+
+  // solvable step by step: any equation with two known numbers gives the third
+  function solvable(given) {
+    var known = given.slice(), changed = true;
+    while (changed) {
+      changed = false;
+      EQS.forEach(function (q) {
+        var k = known[q[0]] + known[q[1]] + known[q[2]];
+        if (k === 2) { known[q[0]] = known[q[1]] = known[q[2]] = 1; changed = true; }
+      });
+    }
+    return known.indexOf(0) === -1;
+  }
+
+  function makeCrossword() {
+    var hard = state.crossMax === 1000, sol;
+    for (;;) {
+      var a = 1 + rnd(10), b = 1 + rnd(10), d = 1 + rnd(10), e = 1 + rnd(10);
+      var ones = (a === 1) + (b === 1) + (d === 1) + (e === 1);
+      var top = a * b * d * e;
+      if (ones > 1) continue;
+      if (hard ? (top <= 100 || top > 999) : (top < 12 || top > 100)) continue;
+      sol = [a, b, a * b, d, e, d * e, a * d, b * e, top];
+      break;
+    }
+    var given;
+    for (;;) {
+      var pick = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(function () { return Math.random() - 0.5; }).slice(0, 4);
+      given = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      pick.forEach(function (i) { given[i] = 1; });
+      // at least two products given, so the child has to divide, not only multiply
+      var products = given[2] + given[5] + given[6] + given[7] + given[8];
+      if (products >= 2 && solvable(given)) break;
+    }
+    var first = given.indexOf(0);
+    return { sol: sol, given: given, vals: ["", "", "", "", "", "", "", "", ""],
+             bad: [], shown: false, sel: first, tries: 0, locked: false };
+  }
+
+  function newCrossword() {
+    cw = makeCrossword();
+    el.cwFb.textContent = "";
+    el.cwFb.className = "feedback";
+    drawCrossword();
+  }
+
+  function drawCrossword() {
+    var html = "";
+    for (var r = 0; r < 5; r++) {
+      for (var c = 0; c < 5; c++) {
+        if (r % 2 === 0 && c % 2 === 0) {
+          var i = (r / 2) * 3 + c / 2;
+          if (cw.given[i]) {
+            html += '<div class="cell given">' + cw.sol[i] + '</div>';
+          } else {
+            var cls = "cell inp";
+            if (cw.shown) cls += cw.bad[i] ? " shown" : " good";
+            else if (cw.bad[i]) cls += " bad";
+            else if (cw.locked) cls += " good";
+            if (i === cw.sel && !cw.locked) cls += " sel";
+            html += '<div class="' + cls + '" data-i="' + i + '">' + (cw.shown && cw.bad[i] ? cw.sol[i] : cw.vals[i]) + '</div>';
+          }
+        } else if (r % 2 === 0) {
+          html += '<div class="op">' + (c === 1 ? "·" : "=") + '</div>';
+        } else if (c % 2 === 0) {
+          html += '<div class="op">' + (r === 1 ? "·" : "=") + '</div>';
+        } else {
+          html += '<div></div>';
+        }
+      }
+    }
+    el.cw.innerHTML = html;
+    fitCross();
+  }
+
+  // Row heights follow the free space of the stage, so the whole crossword stays visible
+  // on short screens (large system font, browser toolbars) instead of being cut off at the top.
+  function fitCross() {
+    var view = $("crossView"), stage = view.parentNode;
+    if (view.hidden || !stage.clientHeight) return;
+    var cs = getComputedStyle(stage), rule = view.querySelector(".cw-rule"), row, op;
+    var size = function () {
+      var avail = stage.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) -
+        (rule.offsetHeight ? rule.offsetHeight + 10 : 0) - el.cwFb.offsetHeight - parseFloat(getComputedStyle(el.cwFb).marginTop) - 16;
+      op = avail < 150 ? 12 : 18;
+      row = Math.floor((avail - 2 * op) / 3);
+    };
+    view.className = "view"; size();
+    // not enough room: drop the one-line rule (it is the same for every crossword) and measure again
+    if (row < 40) { view.className = "view tight"; size(); }
+    row = Math.max(28, Math.min(60, row));
+    el.cw.style.gridTemplateRows = row + "px " + op + "px " + row + "px " + op + "px " + row + "px";
+    el.cw.className = row < 44 ? "cw small" : "cw";
+  }
+
+  function cwRowText(i) {
+    // the row equation containing cell i, with that cell as a box
+    var row = Math.floor(i / 3) * 3, t = [];
+    for (var k = 0; k < 3; k++) t.push(row + k === i ? "□" : String(cw.sol[row + k]));
+    return t[0] + " · " + t[1] + " = " + t[2];
+  }
+
+  function cwCheck() {
+    // red cells not fixed yet: remind, don't count the same mistakes twice
+    if (cw.bad.some(Boolean)) {
+      cw.sel = cw.bad.indexOf(true);
+      el.cwFb.className = "feedback bad";
+      el.cwFb.textContent = T.cwWrong;
+      restart(el.cw, "shake");
+      drawCrossword();
+      return;
+    }
+    for (var i = 0; i < 9; i++) {
+      if (!cw.given[i] && cw.vals[i] === "") {
+        cw.sel = i;
+        el.cwFb.className = "feedback bad";
+        el.cwFb.textContent = T.cwFill;
+        drawCrossword();
+        return;
+      }
+    }
+    var wrong = [];
+    for (i = 0; i < 9; i++) {
+      if (!cw.given[i] && parseInt(cw.vals[i], 10) !== cw.sol[i]) wrong.push(i);
+    }
+    var s = state.session;
+    if (!wrong.length) {
+      cw.locked = true;
+      s.good++; s.streak++; s.pine++;
+      state.best.pine++; state.best.solved++; state.best.cross++;
+      if (cw.tries === 0) state.best.crossFirst++;
+      if (s.streak > state.best.streak) state.best.streak = s.streak;
+      var cat = CATS[rnd(CATS.length)];
+      el.cwFb.className = "feedback good";
+      el.cwFb.textContent = T.gotCat + " " + cat;
+      el.burst.textContent = cat;
+      restart(el.burst, "show");
+      sound("cat");
+      logSession([], true);
+      save(); render(); drawCrossword();
+      setTimeout(newCrossword, 1500);
+      return;
+    }
+    cw.tries++;
+    s.bad++; s.streak = 0;
+    cw.bad = [];
+    wrong.forEach(function (i) { cw.bad[i] = true; });
+    logSession(wrong.map(function (i) {
+      return { q: cwRowText(i), a: cw.vals[i], r: cw.sol[i], x: 1 };
+    }), false);
+    restart(el.cw, "shake");
+    sound("bad");
+    el.cwFb.className = "feedback bad";
+    if (cw.tries >= 2) {
+      // second miss: show the answers and move on
+      cw.shown = true; cw.locked = true;
+      el.cwFb.textContent = T.cwReveal;
+      setTimeout(newCrossword, 3500);
+    } else {
+      cw.sel = wrong[0];
+      el.cwFb.textContent = T.cwWrong;
+    }
+    save(); render(); drawCrossword();
+  }
+
+  function cwPress(k) {
+    if (cw.locked) return;
+    if (k === "ok") return cwCheck();
+    var i = cw.sel;
+    if (i < 0 || cw.given[i]) return;
+    var v = cw.vals[i];
+    if (k === "del") v = v.slice(0, -1);
+    else if (v.length < 3) v = (v === "0" ? "" : v) + k;
+    cw.vals[i] = v;
+    cw.bad[i] = false;
+    el.cwFb.textContent = "";
+    drawCrossword();
+  }
+
+  function cwMoveSel() {
+    // Tab key: jump to the next open cell
+    for (var n = 1; n <= 9; n++) {
+      var i = (cw.sel + n) % 9;
+      if (!cw.given[i]) { cw.sel = i; drawCrossword(); return; }
+    }
+  }
+
+  el.cw.addEventListener("click", function (e) {
+    var c = e.target.closest("[data-i]");
+    if (!c || cw.locked) return;
+    cw.sel = +c.getAttribute("data-i");
+    drawCrossword();
+  });
+
+  // ---------- divisors mode: tap every divisor, like "wypisz dzielniki" ----------
+  var dv = null, dvRetry = [], dvRecent = [];
+
+  function newDivs() {
+    var n = 0;
+    dvRetry.forEach(function (r) { r.wait--; });
+    for (var i = 0; i < dvRetry.length; i++) {
+      if (dvRetry[i].wait <= 0) { n = dvRetry.splice(i, 1)[0].n; break; }
+    }
+    if (!n) {
+      // mostly numbers with many divisors; a prime now and then ("only 1 and itself")
+      do { n = between(6, 60); } while ((divisorsOf(n).length < 4 && rnd(4)) || dvRecent.indexOf(n) !== -1);
+    }
+    dvRecent.push(n);
+    if (dvRecent.length > 10) dvRecent.shift();
+    dv = { n: n, divs: divisorsOf(n), sel: {}, done: false };
+    $("divsFb").textContent = "";
+    $("divsFb").className = "feedback";
+    $("btnDivs").textContent = T.check;
+    drawDivs();
+  }
+
+  function drawDivs() {
+    $("divsN").textContent = dv.n;
+    var html = "";
+    for (var i = 1; i <= dv.n; i++) {
+      var isDiv = dv.n % i === 0, cls = "";
+      if (!dv.done) cls = dv.sel[i] ? "on" : "";
+      else if (dv.sel[i]) cls = isDiv ? "ok" : "bad";
+      else if (isDiv) cls = "miss";
+      html += '<button class="' + cls + '" data-n="' + i + '">' + i + '</button>';
+    }
+    $("divsGrid").innerHTML = html;
+  }
+
+  // 50 = 1 · 50 = 2 · 25 = 5 · 10: divisors come in pairs
+  function divPairs(n) {
+    var out = [];
+    divisorsOf(n).forEach(function (d) { if (d * d <= n) out.push(d + " · " + n / d); });
+    return n + " = " + out.join(" = ");
+  }
+
+  function divsCheck() {
+    if (dv.done) return newDivs();
+    var picked = Object.keys(dv.sel).filter(function (k) { return dv.sel[k]; }).map(Number).sort(function (a, b) { return a - b; });
+    if (!picked.length) {
+      $("divsFb").className = "feedback bad";
+      $("divsFb").textContent = T.divsPick;
+      return;
+    }
+    var ok = picked.join(",") === dv.divs.join(",");
+    var s = state.session;
+    dv.done = true;
+    var p = { topic: "divgrid", text: "D" + dv.n, result: dv.divs.join(", "), sol: dv.n + ": " + dv.divs.join(", ") };
+    var tf = state.topicFacts["divs|" + p.text] || (state.topicFacts["divs|" + p.text] = { g: 0, b: 0, p: p });
+    if (ok) {
+      tf.g++;
+      s.good++; s.streak++; s.pine++;
+      state.best.pine++; state.best.solved++;
+      if (s.streak > state.best.streak) state.best.streak = s.streak;
+      var cat = CATS[rnd(CATS.length)];
+      el.burst.textContent = cat;
+      restart(el.burst, "show");
+      sound("cat");
+      $("divsFb").className = "feedback good";
+      $("divsFb").textContent = T.divsGood + " " + cat + "  " + divPairs(dv.n);
+      logSession([], false);
+    } else {
+      tf.b++;
+      s.bad++; s.streak = 0;
+      dvRetry.push({ n: dv.n, wait: 2 + rnd(2) });
+      sound("bad");
+      restart($("divsGrid"), "shake");
+      $("divsFb").className = "feedback bad";
+      $("divsFb").textContent = divPairs(dv.n);
+      logSession([{ q: String(dv.n), a: picked.join(", "), r: dv.divs.join(", "), d: 1 }], false);
+    }
+    $("btnDivs").textContent = T.nextL;
+    save(); render(); drawDivs();
+  }
+
+  $("divsGrid").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-n]");
+    if (!b || dv.done) return;
+    var n = +b.getAttribute("data-n");
+    dv.sel[n] = !dv.sel[n];
+    $("divsFb").textContent = "";
+    drawDivs();
+  });
+  // ---------- factorize: the column method ----------
+  var PRIMES = [2, 3, 5, 7, 11, 13];
+  var fx = null, fxRetry = [], fxRecent = [];
+  $("primeKeys").innerHTML = PRIMES.map(function (q) { return '<button class="key" data-p="' + q + '">' + q + '</button>'; }).join("");
+
+  function newFactor() {
+    var n = 0;
+    fxRetry.forEach(function (r) { r.wait--; });
+    for (var i = 0; i < fxRetry.length; i++) {
+      if (fxRetry[i].wait <= 0) { n = fxRetry.splice(i, 1)[0].n; break; }
+    }
+    if (!n) {
+      var f;
+      do { n = between(12, 120); f = primeFactors(n); }
+      while (f.length < 2 || f[f.length - 1] > 13 || (f.length < 3 && rnd(3)) || fxRecent.indexOf(n) !== -1);
+    }
+    fxRecent.push(n);
+    if (fxRecent.length > 10) fxRecent.shift();
+    fx = { n: n, cur: n, steps: [], wrongs: [], done: false };
+    $("divsFb").textContent = "";
+    $("divsFb").className = "feedback";
+    $("btnDivs").hidden = true;
+    drawFactor();
+  }
+
+  function drawFactor() {
+    var html = "", v = fx.n;
+    fx.steps.forEach(function (q) {
+      html += '<div>' + v + '</div><div class="f">' + q + '</div>';
+      v /= q;
+    });
+    html += fx.done
+      ? '<div class="now">1</div><div class="f"></div>'
+      : '<div class="now">' + v + '</div><div class="f q">?</div>';
+    $("ladder").innerHTML = html;
+  }
+
+  function factorTap(q) {
+    if (!fx || fx.done) return;
+    if (fx.cur % q) {
+      fx.wrongs.push(fx.cur + " : " + q);
+      sound("bad");
+      restart($("ladder"), "shake");
+      $("divsFb").className = "feedback bad";
+      $("divsFb").textContent = T.factorNot.replace("{n}", fx.cur).replace("{p}", q);
+      return;
+    }
+    fx.steps.push(q);
+    fx.cur /= q;
+    $("divsFb").textContent = "";
+    if (fx.cur === 1) factorDone(); else sound("jump");
+    drawFactor();
+  }
+
+  function factorDone() {
+    fx.done = true;
+    var sorted = fx.steps.slice().sort(function (a, b) { return a - b; });
+    var sol = fx.n + " = " + sorted.join(" · ");
+    var p = { topic: "factree", text: "F" + fx.n, result: sorted.join("·"), sol: sol };
+    var tf = state.topicFacts["primes|" + p.text] || (state.topicFacts["primes|" + p.text] = { g: 0, b: 0, p: p });
+    var s = state.session;
+    if (!fx.wrongs.length) {
+      tf.g++;
+      s.good++; s.streak++; s.pine++;
+      state.best.pine++; state.best.solved++;
+      if (s.streak > state.best.streak) state.best.streak = s.streak;
+      var cat = CATS[rnd(CATS.length)];
+      el.burst.textContent = cat;
+      restart(el.burst, "show");
+      sound("cat");
+      $("divsFb").className = "feedback good";
+      $("divsFb").textContent = T.factorDone + " " + cat + "  " + sol;
+      logSession([], false);
+    } else {
+      // finished, but with wrong tries on the way: no kitten, and the number comes back
+      tf.b++;
+      s.bad++; s.streak = 0;
+      fxRetry.push({ n: fx.n, wait: 2 + rnd(2) });
+      sound("good");
+      $("divsFb").className = "feedback";
+      $("divsFb").textContent = sol;
+      logSession([{ q: String(fx.n), a: fx.wrongs.join(", "), r: sorted.join(" · "), f: 1 }], false);
+    }
+    $("btnDivs").hidden = false;
+    $("btnDivs").textContent = T.nextL;
+    save(); render();
+  }
+
+  $("primeKeys").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-p]");
+    if (b) factorTap(+b.getAttribute("data-p"));
+  });
+
+  function setDivsSub(v) {
+    state.divsSub = v;
+    save();
+    $("divsBox").hidden = v !== "divs";
+    $("factorBox").hidden = v !== "factor";
+    document.querySelectorAll("#divsSub .chip").forEach(function (c) {
+      c.classList.toggle("on", c.getAttribute("data-sub") === v);
+    });
+    $("divsFb").textContent = "";
+    if (v === "divs") {
+      if (!dv || dv.done) newDivs();
+      $("btnDivs").hidden = false;
+      $("btnDivs").textContent = T.check;
+    } else if (!fx || fx.done) {
+      newFactor();
+    } else {
+      $("btnDivs").hidden = true;
+    }
+  }
+  $("divsSub").addEventListener("click", function (e) {
+    var c = e.target.closest("[data-sub]");
+    if (c && c.getAttribute("data-sub") !== state.divsSub) setDivsSub(c.getAttribute("data-sub"));
+  });
+
+  function divsButton() {
+    if (state.divsSub === "factor") { if (fx && fx.done) newFactor(); return; }
+    divsCheck();
+  }
+  $("btnDivs").addEventListener("click", divsButton);
+
+  function setMode(m) {
+    state.mode = m;
+    save();
+    $("tableView").hidden = m !== "table";
+    $("crossView").hidden = m !== "cross";
+    $("gameView").hidden = m !== "game";
+    $("dashView").hidden = m !== "dash";
+    $("divsView").hidden = m !== "divs";
+    $("keypad").hidden = m === "game" || m === "dash" || m === "divs";
+    document.querySelectorAll(".tab").forEach(function (t) {
+      t.classList.toggle("on", t.getAttribute("data-mode") === m);
+    });
+    if (m !== "table") {
+      stopTimer();
+      el.timer.hidden = true;
+    }
+    if (m === "cross") { if (!cw) newCrossword(); else fitCross(); }
+    if (m === "divs") setDivsSub(state.divsSub);
+    if (m === "game") {
+      gameResize();
+      if (!G) startGame();
+      lastFrame = performance.now();
+      frame();
+    }
+    if (m === "dash") {
+      dashResize();
+      if (!D) startDash();
+      dLast = performance.now();
+      dashFrame();
+    }
+    if (m === "table" && !locked) startTimer();
+  }
+  $("tabs").addEventListener("click", function (e) {
+    var t = e.target.closest("[data-mode]");
+    if (t && t.getAttribute("data-mode") !== state.mode) setMode(t.getAttribute("data-mode"));
+  });
+
+  function press(k) {
+    if (state.mode === "cross") return cwPress(k);
+    if (state.mode === "game") { if (k >= "1" && k <= "3") choose(+k - 1); return; }
+    if (state.mode === "dash") return;
+    if (state.mode === "divs") {
+      if (k === "ok") divsButton();
+      else if (state.divsSub === "factor" && PRIMES.indexOf(+k) !== -1) factorTap(+k);
+      return;
+    }
+    if (locked) return;
+    if (k === "ok") return check();
+    if (k === "del") { input = input.slice(0, -1); }
+    else if (input.length < 3) {
+      if (input === "0") input = "";
+      input += k;
+    }
+    el.ans.textContent = input;
+  }
+
+  // ---------- sound (generated, no files needed) ----------
+  var ac = null;
+  function tone(freq, start, dur, type) {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || "sine";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, ac.currentTime + start);
+    g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + start + dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(ac.currentTime + start);
+    o.stop(ac.currentTime + start + dur + 0.05);
+  }
+  function meow() {
+    var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(520, t);
+    o.frequency.linearRampToValueAtTime(880, t + 0.15);
+    o.frequency.exponentialRampToValueAtTime(420, t + 0.55);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.06);
+    g.gain.setValueAtTime(0.3, t + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); o.stop(t + 0.65);
+  }
+  function sound(kind) {
+    if (!state.sound) return;
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === "suspended") ac.resume();
+      if (kind === "good") { tone(660, 0, .12); tone(880, .1, .18); }
+      else if (kind === "jump") { tone(330, 0, .08); tone(520, .05, .1); }
+      else if (kind === "cat") { meow(); }
+      else { tone(220, 0, .25, "triangle"); tone(180, .18, .3, "triangle"); }
+    } catch (e) {}
+  }
+
+  // ---------- settings ----------
+  function chips(container, items, isOn, onTap) {
+    container.innerHTML = "";
+    items.forEach(function (it) {
+      var b = document.createElement("button");
+      b.className = "chip" + (isOn(it.v) ? " on" : "");
+      b.textContent = it.label;
+      b.addEventListener("click", function () { onTap(it.v); drawSettings(); });
+      container.appendChild(b);
+    });
+  }
+
+  function toggleIn(arr, v) {
+    var i = arr.indexOf(v);
+    if (i === -1) { arr.push(v); return true; }
+    if (arr.length === 1) return false;
+    arr.splice(i, 1);
+    return true;
+  }
+
+  function drawSettings() {
+    var nums = [2, 3, 4, 5, 6, 7, 8, 9].map(function (n) { return { v: n, label: String(n) }; });
+    chips($("chipsNums"), nums,
+      function (v) { return state.nums.indexOf(v) !== -1; },
+      function (v) { toggleIn(state.nums, v); state.nums.sort(function (a, b) { return a - b; }); save(); });
+    chips($("chipsOps"), [{ v: "mul", label: T.opMul }, { v: "div", label: T.opDiv }],
+      function (v) { return state.ops.indexOf(v) !== -1; },
+      function (v) { toggleIn(state.ops, v); save(); });
+    chips($("chipsTimer"), [0, 5, 10, 15, 20, 30].map(function (n) {
+        return { v: n, label: n ? n + " " + T.sec : T.off };
+      }),
+      function (v) { return state.timer === v; },
+      function (v) { state.timer = v; save(); });
+    chips($("chipsTopics"), TOPICS.map(function (t) {
+        return { v: t, label: T[{ table: "tTable", order: "tOrder", rem: "tRem", frac: "tFrac", divs: "tDivs", gcd: "tGcd", primes: "tPrimes" }[t]] };
+      }),
+      function (v) { return state.topics.indexOf(v) !== -1; },
+      function (v) { toggleIn(state.topics, v); save(); });
+    chips($("chipsCross"), [100, 1000].map(function (n) { return { v: n, label: T.upTo + " " + n }; }),
+      function (v) { return state.crossMax === v; },
+      function (v) { state.crossMax = v; save(); });
+    chips($("chipsSound"), [{ v: true, label: "🔊 " + T.on }, { v: false, label: "🔇 " + T.off }],
+      function (v) { return state.sound === v; },
+      function (v) { state.sound = v; save(); });
+    chips($("chipsLang"), Object.keys(LANG_NAMES).map(function (k) { return { v: k, label: LANG_NAMES[k] }; }),
+      function (v) { return state.lang === v; },
+      function (v) { state.lang = v; state.langChosen = true; T = I18N[v]; save(); applyLang(); });
+    $("records").innerHTML =
+      T.bestStreak + ": <b>" + state.best.streak + "</b><br>" +
+      T.totalCats + ": <b>" + state.best.pine + "</b> 🐱<br>" +
+      T.totalSolved + ": <b>" + state.best.solved + "</b>";
+  }
+
+  function applyLang() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-t]").forEach(function (n) {
+      var v = T[n.getAttribute("data-t")];
+      if (typeof v === "string") n.textContent = v;
+    });
+  }
+
+  var heatMode = "mul";
+
+  function cellClass(c) {
+    var total = c[0] + c[1];
+    if (!total) return "c-none";
+    if (!c[1]) return "c-ok";
+    return c[1] / total > 0.5 ? "c-bad" : "c-some";
+  }
+  function factCount(op, r, c) {
+    var a = state.facts[op + ":" + r + ":" + c] || [0, 0];
+    if (op === "mul" && r !== c) {
+      // 7·8 and 8·7 are the same fact
+      var b = state.facts["mul:" + c + ":" + r] || [0, 0];
+      return [a[0] + b[0], a[1] + b[1]];
+    }
+    return [a[0], a[1]];
+  }
+  function factText(op, n, m) {
+    return op === "mul" ? n + " · " + m + " = " + n * m : (n * m) + " : " + n + " = " + m;
+  }
+
+  function drawStats() {
+    chips($("chipsHeat"), [{ v: "mul", label: T.opMul }, { v: "div", label: T.opDiv }],
+      function (v) { return heatMode === v; },
+      function (v) { heatMode = v; drawStats(); });
+
+    // heat map: rows = trained numbers, columns = the other factor / quotient 1..10
+    var rows = [];
+    for (var r = 2; r <= 9; r++) {
+      var has = state.nums.indexOf(r) !== -1;
+      for (var c = 1; c <= 10 && !has; c++) has = !!state.facts[heatMode + ":" + r + ":" + c];
+      if (has) rows.push(r);
+    }
+    var sign = heatMode === "mul" ? "·" : ":";
+    var html = '<div class="hd">' + sign + '</div>';
+    for (var c = 1; c <= 10; c++) html += '<div class="hd">' + c + '</div>';
+    html += '<div class="hd">%</div>';
+    rows.forEach(function (r) {
+      var good = 0, bad = 0;
+      html += '<div class="row-l">' + r + '</div>';
+      for (var c = 1; c <= 10; c++) {
+        var cnt = factCount(heatMode, r, c);
+        good += cnt[0]; bad += cnt[1];
+        html += '<div class="' + cellClass(cnt) + '">' + (cnt[1] || "") + '</div>';
+      }
+      html += '<div class="pct">' + (good + bad ? Math.round(100 * good / (good + bad)) + "%" : "—") + '</div>';
+    });
+    $("heat").innerHTML = html;
+
+    // hardest examples: most mistakes first
+    var hard = {};
+    Object.keys(state.facts).forEach(function (k) {
+      var parts = k.split(":"), op = parts[0], n = +parts[1], m = +parts[2];
+      if (op === "mul" && n > m) { var t = n; n = m; m = t; }
+      var id = op + ":" + n + ":" + m;
+      var h = hard[id] || (hard[id] = { text: factText(op, n, m), good: 0, bad: 0 });
+      h.good += state.facts[k][0]; h.bad += state.facts[k][1];
+    });
+    var list = Object.keys(hard).map(function (k) { return hard[k]; })
+      .filter(function (h) { return h.bad > 0; })
+      .sort(function (a, b) { return b.bad - a.bad || (b.bad / (b.bad + b.good)) - (a.bad / (a.bad + a.good)); })
+      .slice(0, 10);
+    $("hardest").innerHTML = list.length
+      ? list.map(function (h) {
+          return '<div class="hard"><span>' + h.text + '</span><span>✗ ' + h.bad + ' · ✓ ' + h.good + '</span></div>';
+        }).join("")
+      : '<div class="empty">' + (Object.keys(state.facts).length ? T.noMistakes : T.noData) + '</div>';
+
+    var names = { order: T.tOrder, rem: T.tRem, frac: T.tFrac, divs: T.tDivs, gcd: T.tGcd, primes: T.tPrimes }, tops = "";
+    ["order", "rem", "frac", "divs", "gcd", "primes"].forEach(function (t) {
+      var g = 0, b = 0, misses = [];
+      Object.keys(state.topicFacts).forEach(function (k) {
+        var f = state.topicFacts[k];
+        // the Divisors mode and the Divisors game topic are counted together
+        if (f.p.topic !== t && !(t === "divs" && f.p.topic === "divgrid") && !(t === "primes" && f.p.topic === "factree")) return;
+        g += f.g; b += f.b;
+        if (f.b) misses.push(f);
+      });
+      if (!g && !b) return;
+      misses.sort(function (x, y) { return y.b - x.b; });
+      tops += '<div class="list-item"><div class="when">' + names[t] + ' <span class="meta">· ' +
+        Math.round(100 * g / (g + b)) + '% &nbsp; ✓ ' + g + ' &nbsp; ✗ ' + b + '</span></div>' +
+        (misses.length ? '<div class="errs">' + misses.slice(0, 4).map(function (f) {
+          return solQ(f.p) + " (✗" + f.b + ")";
+        }).join("<br>") + '</div>' : '') + '</div>';
+    });
+    $("topicSummary").innerHTML = tops || '<div class="empty">' + T.noData + '</div>';
+    $("dashSummary").innerHTML = T.bestDist + ": <b>🏁 " + state.best.dash + " " + T.meters + "</b>";
+    $("gameSummary").innerHTML = T.bestHeight + ": <b>⬆ " + state.best.height + "</b>";
+    $("crossSummary").innerHTML = T.cwSolved + ": <b>" + state.best.cross + "</b> 🧩 &nbsp;·&nbsp; " +
+      T.cwFirst + ": <b>" + state.best.crossFirst + "</b>";
+
+    // sessions, newest first
+    var fmt;
+    try {
+      fmt = new Intl.DateTimeFormat(T.locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    } catch (e) { fmt = { format: function (d) { return d.toLocaleString(); } }; }
+    $("sessions").innerHTML = state.history.length
+      ? state.history.slice().reverse().map(function (h) {
+          var total = h.good + h.bad;
+          var mins = Math.max(1, Math.round((h.last - h.start) / 60000));
+          var errs = h.mistakes.map(function (x) {
+            if (x.x) return "🧩 " + x.q + ": " + x.a + " → " + x.r;
+            if (x.d) return "🔍 " + x.q + ": " + x.a + " → " + x.r;
+            if (x.f) return "🌳 " + x.q + ": " + x.a + " ✗ → " + x.r;
+            if (x.k) return x.q + " " + label(x.a) + " → " + label(x.r);
+            return x.q + " = " + (x.a === "" ? "⏱" : label(x.a)) + " → " + label(x.r);
+          });
+          return '<div class="list-item">' +
+            '<div class="when">' + fmt.format(new Date(h.start)) + ' <span class="meta">· ' + mins + ' ' + T.min + '</span></div>' +
+            '<div class="meta">✓ ' + h.good + ' &nbsp; ✗ ' + h.bad + ' &nbsp; 🐱 ' + (h.cats || 0) +
+            (h.cross ? ' &nbsp; 🧩 ' + h.cross : '') +
+            (h.height ? ' &nbsp; 🐾 ⬆' + h.height : '') +
+            (h.dist ? ' &nbsp; ⚡ ' + h.dist + ' ' + T.meters : '') +
+            ' &nbsp; · ' + (total ? Math.round(100 * h.good / total) : 0) + '%</div>' +
+            (errs.length ? '<div class="errs">' + errs.join("<br>") + '</div>' : '') +
+            '</div>';
+        }).join("")
+      : '<div class="empty">' + T.noData + '</div>';
+  }
+
+  function anySheetOpen() { return !!document.querySelector(".sheet-bg.open"); }
+
+  function openStats() {
+    stopTimer();
+    drawStats();
+    $("statsBg").classList.add("open");
+    $("statsBg").querySelector(".sheet").scrollTop = 0;
+  }
+  function closeStats() {
+    $("statsBg").classList.remove("open");
+    resumeTimer();
+  }
+
+  var settingsSnapshot = "";
+  function openSettings() {
+    settingsSnapshot = JSON.stringify([state.nums, state.ops, state.timer, state.crossMax, state.topics]);
+    stopTimer();
+    drawSettings();
+    el.sheet.classList.add("open");
+  }
+  function closeSettings() {
+    el.sheet.classList.remove("open");
+    var now = JSON.parse(JSON.stringify([state.nums, state.ops, state.timer, state.crossMax, state.topics]));
+    var was = JSON.parse(settingsSnapshot);
+    if (JSON.stringify(was[4]) !== JSON.stringify(now[4])) {
+      // new topics: the Jumper asks a fresh question, the Dash picks them up with the next one
+      if (G) { G.retry = []; G.recent = []; if (G.phase === "choose") newRow(); }
+      if (D) { D.retry = []; D.recent = []; }
+    }
+    if (was[3] !== now[3]) { if (state.mode === "cross") newCrossword(); else cw = null; }
+    if (JSON.stringify(now.slice(0, 3)) !== JSON.stringify(was.slice(0, 3))) {
+      retry = []; recent = [];
+      if (!locked) next();
+    } else {
+      resumeTimer();
+    }
+  }
+
+  // Android back button: close settings first, otherwise let the app exit
+  window.onAndroidBack = function () {
+    if (el.sheet.classList.contains("open")) { closeSettings(); return true; }
+    if ($("statsBg").classList.contains("open")) { closeStats(); return true; }
+    return false;
+  };
+
+  // ---------- wiring ----------
+  $("keypad").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-k]");
+    if (b) press(b.getAttribute("data-k"));
+  });
+  document.addEventListener("keydown", function (e) {
+    if (anySheetOpen()) return;
+    if (/^[0-9]$/.test(e.key)) press(e.key);
+    else if (e.key === "Backspace") press("del");
+    else if (e.key === "Enter") press("ok");
+    else if (e.key === "Tab" && state.mode === "cross") { e.preventDefault(); cwMoveSel(); }
+    else if (state.mode === "dash" && (e.key === " " || e.key === "ArrowUp")) { e.preventDefault(); dashJump(); }
+    else if (state.mode === "game" && /^Arrow(Left|Down|Up|Right)$/.test(e.key)) {
+      choose({ ArrowLeft: 0, ArrowDown: 1, ArrowUp: 1, ArrowRight: 2 }[e.key]);
+    }
+  });
+  $("btnSettings").addEventListener("click", openSettings);
+  $("btnStats").addEventListener("click", openStats);
+  $("btnStatsClose").addEventListener("click", closeStats);
+  $("statsBg").addEventListener("click", function (e) { if (e.target === this) closeStats(); });
+  $("btnClose").addEventListener("click", closeSettings);
+  el.sheet.addEventListener("click", function (e) { if (e.target === el.sheet) closeSettings(); });
+  // two taps instead of confirm(), so a child can't wipe anything by accident
+  function twoTap(btn, labelKey, action) {
+    var armed = false, timer = 0;
+    btn.addEventListener("click", function () {
+      if (!armed) {
+        armed = true;
+        btn.textContent = T.confirmReset;
+        timer = setTimeout(function () { armed = false; btn.textContent = T[labelKey]; }, 3000);
+        return;
+      }
+      clearTimeout(timer);
+      armed = false;
+      btn.textContent = T[labelKey];
+      action();
+    });
+  }
+  // new session: the score starts from zero, statistics are kept
+  twoTap($("btnReset"), "reset", function () {
+    state.session = Object.assign({}, defaults.session);
+    save(); render(); closeSettings(); next();
+  });
+  twoTap($("btnClearStats"), "clearStats", function () {
+    state.facts = {};
+    state.topicFacts = {};
+    state.history = [];
+    state.session.start = 0;
+    save(); drawStats();
+  });
+
+  // don't let time run out while the app is in the background
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stopTimer();
+    else resumeTimer();
+  });
+
+  applyLang();
+  render();
+  next();
+  setMode(state.mode);
+
+  // offline use: the service worker only runs over https (or on localhost)
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
