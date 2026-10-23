@@ -1,6 +1,6 @@
 // CatMath works offline: files are served from the cache and refreshed in the
 // background, so a new version shows up the next time the app is opened.
-var CACHE = "catmath-v3";
+var CACHE = "catmath-v2";
 var FILES = [
   "./",
   "index.html",
