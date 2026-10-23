@@ -2,7 +2,7 @@
 
 Math practice for grade 5 with kittens. It runs in the browser, works offline, has no ads and collects no data.
 
-**Open it:** https://koscho-sol.github.io/catmath/
+**Open it:** https://smart-cat-space.github.io/catmath/
 
 Languages: English (default), Polski, Русский, Українська — switch in ⚙️ Settings.
 
