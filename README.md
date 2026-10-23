@@ -1,8 +1,8 @@
 # 🐱 CatMath
 
-Math practice for grade 5 with kittens. It runs in the browser, works offline, has no ads and collects no data.
+Math practice for grade 5 with kittens. It runs in the browser, works offline, has no ads and collects no personal data.
 
-**Open it:** https://koscho-sol.github.io/catmath/
+**Open it:** https://smart-cat-space.github.io/catmath/
 
 Languages: English (default), Polski, Русский, Українська — switch in ⚙️ Settings.
 
@@ -29,11 +29,13 @@ Correct answers earn kittens: every 3 in Table, every 5 in the games, and one fo
 
 ## Privacy
 
-Everything stays on the device. Progress is saved in the browser's local storage; nothing is sent anywhere. Clearing the browser data resets the progress.
+Progress stays on the device: it is saved in the browser's local storage and never sent anywhere. Clearing the browser data resets the progress.
+
+To know roughly how many people use CatMath, each time the app is opened online it sends an anonymous visit count to [GoatCounter](https://www.goatcounter.com/). It uses no cookies and stores no names, accounts or answers, and opens without internet are not counted.
 
 ## Po polsku
 
-CatMath to aplikacja do ćwiczenia matematyki w klasie 5 (tabliczka mnożenia, krzyżówki, dzielniki, rozkład na czynniki, NWD i NWW, ułamki, kolejność działań, dzielenie z resztą) w formie gier z kotkami. Działa w przeglądarce i bez internetu, bez reklam, nie zbiera żadnych danych. Język polski można wybrać w ⚙️ Ustawieniach.
+CatMath to aplikacja do ćwiczenia matematyki w klasie 5 (tabliczka mnożenia, krzyżówki, dzielniki, rozkład na czynniki, NWD i NWW, ułamki, kolejność działań, dzielenie z resztą) w formie gier z kotkami. Działa w przeglądarce i bez internetu, bez reklam, nie zbiera danych osobowych (liczy tylko anonimowe odwiedziny). Język polski można wybrać w ⚙️ Ustawieniach.
 
 ## Development
 
